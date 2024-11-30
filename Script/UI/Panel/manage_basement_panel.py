@@ -585,6 +585,9 @@ class ChangeWorkButtonList:
                         open_cid = game_config.config_facility_open_name_to_cid[work_place]
                         if not cache.rhodes_island.facility_open[open_cid]:
                             flag_open = False
+                # 幼女不能进行学生以外的工作
+                if handle_premise.handle_self_is_child(self.NPC_id) and work_cid != 152:
+                    flag_open = False
                 # 特殊解锁的工作不直接开放
                 if work_tag == 2:
                     flag_open = False
@@ -597,7 +600,7 @@ class ChangeWorkButtonList:
                     # 将work_text_before统一对齐为18个全角字符
                     work_text = f"{work_text_before.ljust(18,'　')}：{work_describe}"
                     # 正常工作直接显示
-                    if work_tag == 0:
+                    if work_tag in {0, 2}:
                         button_draw = draw.LeftButton(
                             work_text,
                             f"\n{work_cid}",
@@ -605,6 +608,9 @@ class ChangeWorkButtonList:
                             cmd_func=self.select_new_work,
                             args=work_cid
                         )
+                        # 特殊工作则高亮显示
+                        if work_tag == 2:
+                            button_draw.normal_style = "gold_enrod"
                         button_draw.draw()
                         return_list.append(button_draw.return_text)
                     # 特殊工作显示为灰色，无法选择

@@ -174,7 +174,7 @@ def character_behavior(character_id: int, now_time: datetime.datetime, pl_start_
     # 再处理NPC部分
     if character_id:
         # if character_data.name == "阿米娅":
-        # print(f"debug 前：{character_data.name}，behavior_id = {game_config.config_status[character_data.state].name}，start_time = {character_data.behavior.start_time}, game_time = {now_time}")
+        #     print(f"debug 前：{character_data.name}，behavior_id = {game_config.config_status[character_data.state].name}，start_time = {character_data.behavior.start_time}, game_time = {now_time}")
         # 空闲状态下寻找、执行、结算可用行动
         if character_data.state == constant.CharacterStatus.STATUS_ARDER:
             # 寻找可用行动
@@ -195,7 +195,7 @@ def character_behavior(character_id: int, now_time: datetime.datetime, pl_start_
         if time_judge:
             cache.over_behavior_character.add(character_id)
         # if character_data.name == "阿米娅":
-            # print(f"debug 后：{character_data.name}，time_judge = {time_judge}，behavior_id = {game_config.config_status[character_data.state].name}，start_time = {character_data.behavior.start_time}, game_time = {now_time}, duration = {character_data.behavior.duration}, end_time = {game_time.get_sub_date(minute=character_data.behavior.duration, old_date=character_data.behavior.start_time)}")
+        #     print(f"debug 后：{character_data.name}，time_judge = {time_judge}，behavior_id = {game_config.config_status[character_data.state].name}，start_time = {character_data.behavior.start_time}, game_time = {now_time}, duration = {character_data.behavior.duration}, end_time = {game_time.get_sub_date(minute=character_data.behavior.duration, old_date=character_data.behavior.start_time)}")
 
     # 自动获得对应素质和能力
     handle_talent.gain_talent(character_id,now_gain_type = 0)
@@ -336,7 +336,8 @@ def find_character_target(character_id: int, now_time: datetime.datetime):
         # print(f"debug {character_data.name}")
         # print(f"debug null_target_set = {null_target_set}")
         # print(f"debug premise_data = {premise_data}")
-        # print(f"debug {character_data.name}的target = {target},weight = {weight},now_time = {now_time}")
+        # if character_data.name == "阿米娅":
+        #     print(f"debug {character_data.name}的target = {target},weight = {weight},now_time = {now_time}")
         target_config = game_config.config_target[target]
         state_machine_id = target_config.state_machine_id
         #如果上个AI行动是普通交互指令，则将等待flag设为1
@@ -344,6 +345,8 @@ def find_character_target(character_id: int, now_time: datetime.datetime):
         #     character_data.sp_flag.wait_flag = 1
             # print(f"debug 前一个状态机id = ",state_machine_id,",flag变为1,character_name =",character_data.name)
         constant.handle_state_machine_data[state_machine_id](character_id)
+        # if character_data.name == "阿米娅":
+        #     print(f"debug 中：{character_data.name}，behavior_id = {game_config.config_status[character_data.state].name}，start_time = {character_data.behavior.start_time}, game_time = {now_time}")
     else:
         now_judge = game_time.judge_date_big_or_small(start_time, now_time)
         if now_judge:
@@ -418,7 +421,7 @@ def judge_character_status(character_id: int) -> int:
     Keyword arguments:\n
     character_id -- 角色id\n
     Return arguments:\n
-    bool -- 本次update时间切片内活动是否已完成\n
+    int -- 结算是否成功
     """
     character_data: game_type.Character = cache.character_data[character_id]
     scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
@@ -794,6 +797,16 @@ def judge_character_follow(character_id: int) -> int:
     """
     character_data: game_type.Character = cache.character_data[character_id]
 
+    # 正常状态下的助理跟随，未智能跟随则变成智能跟随
+    if (
+        handle_premise.handle_not_follow(character_id) and
+        handle_premise.handle_is_assistant(character_id) and
+        handle_premise.handle_assistant_follow_1(character_id) and
+        handle_premise.handle_action_not_sleep(character_id) and
+        handle_premise.handle_normal_1(character_id)
+        ):
+        character_data.sp_flag.is_follow = 1
+
     # 智能跟随
     if character_data.sp_flag.is_follow == 1:
         # 取消所有工作和娱乐状态
@@ -845,6 +858,15 @@ def judge_character_h_obscenity_unconscious(character_id: int) -> int:
         special_end_list = constant.special_end_H_list
         if len(cache.pl_pre_status_instruce) and cache.pl_pre_status_instruce[-1] in special_end_list and character_data.behavior.behavior_id not in special_end_list:
             default.handle_both_h_state_reset(0, 1, change_data=game_type.CharacterStatusChange, now_time=datetime.datetime)
+        # 如果在时停中搬运角色，则直接移动到玩家同一地点
+        if (
+            handle_premise.handle_time_stop_on(character_id) and 
+            handle_premise.handle_carry_somebody_in_time_stop(character_id)
+            ):
+            now_carry_chara_id = pl_character_data.pl_ability.carry_chara_id_in_time_stop
+            now_carry_character_data = cache.character_data[now_carry_chara_id]
+            map_handle.character_move_scene(now_carry_character_data.position, pl_character_data.position, now_carry_chara_id)
+
 
     # 玩家部分终止，以下为NPC部分
     if character_id == 0:
@@ -933,6 +955,10 @@ def judge_before_pl_behavior():
         if target_character_data.h_state.shoot_position_cloth != -1:
             target_character_data.h_state.shoot_position_cloth = -1
 
+    else:
+        # 睡眠时间在6h及以上的额外恢复
+        if pl_character_data.state == constant.CharacterStatus.STATUS_SLEEP and pl_character_data.behavior.duration >= 360:
+            refresh_temp_semen_max() # 刷新玩家临时精液上限
 
 def update_sleep():
     """
@@ -964,9 +990,6 @@ def update_sleep():
             assistant_character_data: game_type.Character = cache.character_data[assistant_id]
             if handle_premise.handle_assistant_night_salutation_on(assistant_id) and handle_premise.handle_action_sleep(assistant_id):
                 assistant_character_data.sp_flag.night_salutation = 0
-            # 睡眠时间在6h及以上的额外恢复
-            if character_data.behavior.duration >= 360:
-                refresh_temp_semen_max() # 刷新玩家临时精液上限
             # 检查是否有可以升级的能力
             if cache.system_setting[2]:
                 handle_ability.gain_ability(character_id)
@@ -997,6 +1020,7 @@ def update_sleep():
             character_data.hypnosis.increase_body_sensitivity = False
             character_data.hypnosis.blockhead = False
             character_data.hypnosis.active_h = False
+            character_data.hypnosis.pain_as_pleasure = False
             character_data.hypnosis.roleplay = 0
             # 清零睡奸中醒来状态
             character_data.sp_flag.sleep_h_awake = 0
@@ -1188,6 +1212,28 @@ def character_aotu_change_value(character_id: int, now_time: datetime.datetime, 
     now_character_data.hunger_point += add_hunger
     now_character_data.hunger_point = min(now_character_data.hunger_point,240)
 
+    # 结算有意识、周围有其他人、羞耻没有超限、状态1256正常下，不穿胸衣和内裤时的羞耻值增加
+    exposure_adjust = 0
+    if (
+        handle_premise.handle_not_wear_bra_or_pan(character_id) and 
+        handle_premise.handle_unconscious_flag_0(character_id) and 
+        handle_premise_place.handle_scene_over_two(character_id) and 
+        handle_premise.handle_self_shy_ge_100000(character_id) and 
+        handle_premise.handle_normal_1(character_id) and 
+        handle_premise.handle_normal_2(character_id) and
+        handle_premise.handle_normal_5(character_id) and
+        handle_premise.handle_normal_6(character_id)
+        ):
+        if handle_premise.handle_not_wear_bra(character_id):
+            exposure_adjust += 1
+        if handle_premise.handle_not_wear_pan(character_id):
+            exposure_adjust += 2
+    if exposure_adjust:
+        feel_adjust = attr_calculation.get_ability_adjust(now_character_data.ability[34])
+        exposure_add = true_add_time * feel_adjust * exposure_adjust
+        now_character_data.status_data[16] += exposure_add
+        now_character_data.status_data[16] = min(now_character_data.status_data[16],100000)
+
     # print(f"debug character_id = {character_id}，target_character_id = {player_character_data.target_character_id}，now_character_data.hunger_point = {now_character_data.hunger_point}")
 
     # 结算乳汁量，仅结算有泌乳素质的
@@ -1308,7 +1354,7 @@ def judge_weak_up_in_sleep_h(character_id: int):
         # 对方获得睡奸醒来状态
         target_data.sp_flag.sleep_h_awake = True
         # 重置双方H结构体和相关数据
-        default.handle_both_h_state_reset(0, 0, game_type.CharacterStatusChange, datetime.datetime)
+        default.handle_both_h_state_reset(0, 1, game_type.CharacterStatusChange, datetime.datetime)
         # 检测是否满足高级性骚扰的实行值需求
         if handle_premise.handle_instruct_judge_high_obscenity(0):
             # 如果已经陷落的话
@@ -1436,9 +1482,14 @@ def get_chara_entertainment(character_id: int):
         if hasattr(cache.rhodes_island, 'party_day_of_week') and cache.rhodes_island.party_day_of_week[week_day]:
             for i in range(3):
                 character_data.entertainment.entertainment_type[i] = cache.rhodes_island.party_day_of_week[week_day]
-        
+
         # 否则随机当天的娱乐活动
         else:
+            # 幼女只能进行过家家的娱乐活动
+            if handle_premise.handle_self_is_child(character_id):
+                for i in range(3):
+                    character_data.entertainment.entertainment_type[i] = 151
+                return
             entertainment_list = [i for i in game_config.config_entertainment]
             entertainment_list.remove(0)
             # 循环获得上午、下午、晚上的三个娱乐活动
@@ -1484,18 +1535,14 @@ def get_chara_entertainment(character_id: int):
 def fall_chara_give_pink_voucher(character_id: int):
     """
     陷落角色给予粉红凭证\n
-    Keyword arguments:
+    Keyword arguments:\n
     character_id -- 角色id
     """
-    character_data: game_type.Character = cache.character_data[character_id]
     # 如果已陷落则给予粉红凭证
-    if character_data.talent[201] or character_data.talent[211]:
-        cache.rhodes_island.week_fall_chara_pink_certificate_add += 20
-    elif character_data.talent[202] or character_data.talent[212]:
-        cache.rhodes_island.week_fall_chara_pink_certificate_add += 40
-    elif character_data.talent[203] or character_data.talent[213]:
-        cache.rhodes_island.week_fall_chara_pink_certificate_add += 60
-    elif character_data.talent[204] or character_data.talent[214]:
+    character_fall_level = attr_calculation.get_character_fall_level(character_id)
+    if character_fall_level <= 3:
+        cache.rhodes_island.week_fall_chara_pink_certificate_add += character_fall_level * 20
+    else:
         cache.rhodes_island.week_fall_chara_pink_certificate_add += 100
 
 
@@ -1524,16 +1571,18 @@ def sanity_point_grow():
 def judge_same_position_npc_follow():
     """
     判断同位置的NPC是否跟随玩家\n
-    Keyword arguments:
+    Keyword arguments:\n
     无
     """
     pl_character_data: game_type.Character = cache.character_data[0]
     for character_id in cache.npc_id_got:
         character_data: game_type.Character = cache.character_data[character_id]
-        # 智能跟随、位置在玩家移动的出发地、异常状态267正常
+        # 跳过不在同一位置的NPC
+        if character_data.position != pl_character_data.position:
+            continue
+        # 智能跟随、异常状态267正常
         if (
             character_data.sp_flag.is_follow == 1 and
-            character_data.position == pl_character_data.position and 
             handle_premise.handle_normal_267(character_id)
             ):
 
@@ -1607,12 +1656,13 @@ def judge_interrupt_character_behavior(character_id: int) -> int:
             judge_character_status_time_over(character_id, cache.game_time, end_now = 2)
             return 1
 
-    # 睡觉中的相关判断
-    elif handle_premise.handle_action_sleep(character_id):
-        # ①睡觉中，早安问候服务开启中，今日未问候，则将行动结束时间设为问候时间
+    # 睡觉中的相关判断，需要没有被安眠药
+    elif handle_premise.handle_action_sleep(character_id) and handle_premise.handle_self_not_sleep_pills(character_id):
+        # ①睡觉中，早安问候服务开启中，今日未问候，角色行动结束时间晚于游戏时间，则将行动结束时间设为问候时间
         if (
             handle_premise.handle_assistant_morning_salutation_on(character_id) and
-            handle_premise.handle_morning_salutation_flag_0(character_id)
+            handle_premise.handle_morning_salutation_flag_0(character_id) and
+            handle_premise.handle_chara_behavior_end_time_lateer_than_game_time(character_id)
         ):
             # 角色醒来时间
             start_time = character_data.behavior.start_time
@@ -1630,12 +1680,13 @@ def judge_interrupt_character_behavior(character_id: int) -> int:
                 # print(f"debug {character_data.name}早安问候服务开启中，今日未问候，将行动结束时间设为问候时间，玩家醒来时间={pl_character_data.action_info.wake_time}，角色行动结束时间={end_time},原行动时间={character_data.behavior.duration}分钟，新行动时间={new_duration}分钟")
                 character_data.behavior.duration = new_duration
 
-        # ②睡觉中，疲劳归零，且HP、MP满值时，当前非睡觉时间，则立刻结束睡觉
+        # ②睡觉中，疲劳归零，且HP、MP满值时，当前非睡觉时间，角色行动结束时间晚于游戏时间，则立刻结束睡觉
         if (
             handle_premise.handle_tired_le_0(character_id) and
             handle_premise.handle_hp_max(character_id) and
             handle_premise.handle_mp_max(character_id) and
-            not handle_premise.handle_game_time_is_sleep_time(character_id)
+            not handle_premise.handle_game_time_is_sleep_time(character_id) and
+            handle_premise.handle_chara_behavior_end_time_lateer_than_game_time(character_id)
         ):
             judge_character_status_time_over(character_id, cache.game_time, end_now = 2)
             # print(f"debug {character_data.name}疲劳归零，结束睡觉，当前时间={cache.game_time}")

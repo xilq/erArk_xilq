@@ -1092,7 +1092,7 @@ def handle_not_in_toilet_female(character_id: int) -> int:
 @add_premise(constant_promise.Premise.NOT_IN_TOILET)
 def handle_not_in_toilet(character_id: int) -> int:
     """
-    校验角色是否不在洗手间
+    校验角色是否不在洗手间（含宿舍）
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -1105,6 +1105,8 @@ def handle_not_in_toilet(character_id: int) -> int:
     if "Toilet_Male" in now_scene_data.scene_tag:
         return 0
     if "Toilet_Female" in now_scene_data.scene_tag:
+        return 0
+    if "Dormitory" in now_scene_data.scene_tag:
         return 0
     return 1
 
@@ -2005,6 +2007,18 @@ def handle_in_gym_room(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.NOT_IN_GYM_ROOM)
+def handle_not_in_gym_room(character_id: int) -> int:
+    """
+    校验角色是否不在健身区中
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_in_gym_room(character_id)
+
+
 @add_premise(constant_promise.Premise.IN_TRAINING_ROOM)
 def handle_in_training_room(character_id: int) -> int:
     """
@@ -2032,13 +2046,7 @@ def handle_not_in_training_room(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
-    character_data = cache.character_data[character_id]
-    now_position = character_data.position
-    now_scene_str = map_handle.get_map_system_path_str_for_list(now_position)
-    now_scene_data = cache.scene_data[now_scene_str]
-    if "Training_Room" in now_scene_data.scene_tag:
-        return 0
-    return 1
+    return not handle_in_training_room(character_id)
 
 
 @add_premise(constant_promise.Premise.IN_FIGHT_ROOM)

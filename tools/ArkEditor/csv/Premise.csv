@@ -182,6 +182,7 @@ in_library_or_library_office,IN_LIBRARY_OR_LIBRARY_OFFICE,地点_定位,在图�
 not_in_library_or_library_office,NOT_IN_LIBRARY_OR_LIBRARY_OFFICE,地点_定位,不在图书馆或图书馆办公室中
 in_collection_room,IN_COLLECTION_ROOM,地点_定位,在藏品馆中
 in_gym_room,IN_GYM_ROOM,地点_定位,在健身区中
+not_in_gym_room,NOT_IN_GYM_ROOM,地点_定位,不在健身区中
 in_training_room,IN_TRAINING_ROOM,地点_定位,在训练室中（包括木桩房和射击房）
 not_in_training_room,NOT_IN_TRAINING_ROOM,地点_定位,不在训练室中（包括木桩房和射击房）
 in_fight_room,IN_FIGHT_ROOM,地点_定位,在木桩房中
@@ -331,6 +332,11 @@ ai_wait,AI_WAIT,时间_角色,NPC需要进行一次5分钟的等待（wait_flag=
 ai_trained,HAVE_TRAINED,时间_角色,NPC距离上次战斗训练已经超过两天了
 ai_not_shower,NOT_SHOWER,时间_角色,NPC今天还没有洗澡
 ai_have_showered,HAVE_SHOWERED,时间_角色,NPC今天已经洗过澡了
+ai_have_not_wake_up,HAVE_NOT_WAKE_UP,时间_角色,NPC今天还没有起床
+
+first_kiss_in_today,FIRST_KISS_IN_TODAY,时间_初次,自己今天失去了初吻
+first_sex_in_today,FIRST_SEX_IN_TODAY,时间_初次,自己今天失去了V处女
+first_a_sex_in_today,FIRST_A_SEX_IN_TODAY,时间_初次,自己今天失去了A处女
 
 time_day,TIME_DAY,时间_当前,时间:白天（6点~18点）
 time_night,TIME_NIGHT,时间_当前,时间:夜晚（18点~6点）
@@ -338,6 +344,8 @@ time_midnight,TIME_MIDNIGHT,时间_当前,时间:深夜（22点~2点）
 time_morning,TIME_MORNING,时间_当前,时间:清晨（4点~8点）
 time_moon,TIME_MOON,时间_当前,时间:中午（10点~14点）
 time_aftermoon,TIME_AFTERMOON,时间_当前,时间:下午（15点~18点）
+time_0_to_9,TIME_0_TO_9,时间_当前,时间:0点~9点
+time_18_to_23,TIME_18_TO_23,时间_当前,时间:18点~23点
 eat_time,EAT_TIME,时间_当前,饭点（早上7~8点、中午12~13点、晚上18~19点）
 breakfast_time,BREAKFAST_TIME,时间_当前,早饭饭点（早上7~8点）
 launch_time,LAUNCH_TIME,时间_当前,午饭饭点（中午12~13点）
@@ -364,6 +372,7 @@ before_morning_salutation_time,BEFORE_MORNING_SALUTATION_TIME,时间_当前,当�
 night_salutation_time,NIGHT_SALUTATION_TIME,时间_当前,当前是晚安问候时间（计划睡觉时间之后，权重50）
 not_night_salutation_time,NOT_NIGHT_SALUTATION_TIME,时间_当前,当前不是晚安问候时间（计划睡觉时间之后）
 still_30_minutes_before_end,STILL_30_MINUTES_BEFORE_END,时间_当前,距离行动结束时间还有至少30分钟
+chara_behavior_end_time_lateer_than_game_time,CHARA_BEHAVIOR_END_TIME_LATEER_THAN_GAME_TIME,时间_当前,角色行动结束时间晚于游戏时间
 time_over_a_year,TIME_OVER_A_YEAR,时间_当前,游戏时间超过一年
 
 
@@ -419,6 +428,7 @@ t_mp_low,TARGET_MP_LOW,属性_基础,交互对象气力低于30%
 t_mp_high,TARGET_MP_HIGH,属性_基础,交互对象气力高于70%
 self_and_target_hp_ge_70,SELF_AND_TARGET_HP_GE_70,属性_基础,自身和交互对象体力都高于70%
 tired_le_0,TIRED_LE_0,属性_基础,疲劳条≤0%
+tired_ge_10,TIRED_GE_10,属性_基础,疲劳条≥10%
 tired_ge_50,TIRED_GE_50,属性_基础,疲劳条≥50%
 tired_le_74,TIRED_LE_74,属性_基础,疲劳条≤74%，全指令自由
 tired_ge_75,TIRED_GE_75,属性_基础,疲劳条≥75%，部分指令受限
@@ -475,6 +485,7 @@ is_assistant,IS_ASSISTANT,属性_助理,自己是当前的助理干员
 not_assistant,NOT_ASSISTANT,属性_助理,自己不是当前的助理干员
 t_is_assistant,TARGET_IS_ASSISTANT,属性_助理,交互对象是当前的助理干员
 t_not_assistant,TARGET_NOT_ASSISTANT,属性_助理,交互对象不是当前的助理干员
+assistant_follow_1,ASSISTANT_FOLLOW_1,属性_助理,自己的助理属性中的跟随服务开启中
 assistant_help_work_0,ASSISTANT_HELP_WORK_0,属性_助理,自己的助理属性中的辅佐服务未开启
 assistant_help_work_1,ASSISTANT_HELP_WORK_1,属性_助理,自己的助理属性中的辅佐服务开启中
 assistant_send_food_0,ASSISTANT_SEND_FOOD_0,属性_助理,自己的助理属性中的送饭服务未开启
@@ -849,6 +860,8 @@ kiss_ge_10,KISS_GE_10,属性_经验,自身亲吻经验>=10
 t_kiss_0,TARGET_KISS_0,属性_经验,交互对象亲吻经验==0
 t_kiss_ge_10,TARGET_KISS_GE_10,属性_经验,交互对象亲吻经验>=10
 
+self_shy_ge_100000,SELF_SHY_GE_100000,属性_状态,自身羞耻小于等于100000
+
 self_fall,SELF_FALL,属性_素质,自己有陷落素质
 self_not_fall,SELF_NOT_FALL,属性_素质,自己无陷落素质
 self_fall_1,SELF_FALL_1,属性_素质,自己有1级陷落素质
@@ -879,6 +892,7 @@ obey_ge_3,TARGET_OBEY_GE_3,属性_素质,交互对象隶属系且>=宠物
 obey_le_2,TARGET_OBEY_LE_2,属性_素质,交互对象隶属系且<=驯服
 obey_0_or_le_1,TARGET_OBEY_0_OR_LE_1,属性_素质,交互对象无陷落或隶属系==屈从
 obey_0_or_le_2,TARGET_OBEY_0_OR_LE_2,属性_素质,交互对象无陷落或隶属系<=驯服
+
 kiss_0,NO_FIRST_KISS,属性_素质,玩家未保有初吻
 kiss_1,HAVE_FIRST_KISS,属性_素质,玩家保有初吻
 virgin_0,NO_VIRGIN,属性_素质,玩家非童贞
@@ -892,6 +906,8 @@ t_virgin_0,TARGET_NO_VIRGIN,属性_素质,交互对象非处女
 t_virgin_1,TARGET_HAVE_VIRGIN,属性_素质,交互对象是处女
 t_a_virgin_0,TARGET_NO_A_VIRGIN,属性_素质,交互对象非A处女
 t_a_virgin_1,TARGET_HAVE_A_VIRGIN,属性_素质,交互对象是A处女
+sexual_ignorance_0,SELF_SEXUAL_IGNORANCE_0,属性_素质,自己没有性无知
+sexual_ignorance_1,SELF_SEXUAL_IGNORANCE_1,属性_素质,自己性无知
 t_love_sense_taste_0,T_LOVE_SENSE_TASTE_0,属性_素质,交互对象精爱味觉==0
 t_love_sense_taste_1,T_LOVE_SENSE_TASTE_1,属性_素质,交互对象精爱味觉==1
 t_sadism_0,T_SADISM_0,属性_素质,交互对象施虐狂==0
@@ -937,6 +953,7 @@ t_lactation_0,T_LACTATION_0,属性_素质,交互对象泌乳==0
 t_lactation_1,T_LACTATION_1,属性_素质,交互对象泌乳==1
 t_baby_1,T_BABY_1,属性_素质,交互对象婴儿==1
 
+child_1,SELF_IS_CHILD,属性_素质,自己是幼女
 t_child_or_loli_1,T_CHILD_OR_LOLI_1,属性_素质,交互对象幼女或萝莉==1
 breast_0,SELF_CHEST_IS_CLIFF,属性_素质,自己胸部大小是绝壁
 t_breast_0,TARGET_CHEST_IS_CLIFF,属性_素质,交互对象胸部大小是绝壁
@@ -1052,6 +1069,8 @@ advanced_time_stop,ADVANCED_TIME_STOP,属性_源石技艺,自己拥有高级时�
 time_stop_on,TIME_STOP_ON,属性_源石技艺,时停开启中
 time_stop_off,TIME_STOP_OFF,属性_源石技艺,时停关闭中
 time_stop_judge_for_move,TIME_STOP_JUDGE_FOR_MOVE,属性_源石技艺,(移动用)未开启时停，或时停开启且有中级时停
+not_carry_anybody_in_time_stop,NOT_CARRY_ANYBODY_IN_TIME_STOP,属性_源石技艺,没有在时停中搬运干员
+carry_somebody_in_time_stop,CARRY_SOMEBODY_IN_TIME_STOP,属性_源石技艺,正在时停中搬运干员
 nobody_free_in_time_stop,NOBODY_FREE_IN_TIME_STOP,属性_源石技艺,没有指定可以在时停中自由活动的干员
 somebody_free_in_time_stop,SOMEBODY_FREE_IN_TIME_STOP,属性_源石技艺,玩家已指定可以在时停中自由活动的干员
 self_free_in_time_stop,SELF_FREE_IN_TIME_STOP,属性_源石技艺,自己是在时停中自由活动的干员
@@ -1069,6 +1088,7 @@ t_work_is_library_manager,T_WORK_IS_LIBRARY_MANAGER,属性_工作,交互对象�
 work_is_teacher,WORK_IS_TEACHER,属性_工作,自己的工作为教师
 work_is_student,WORK_IS_STUDENT,属性_工作,自己的工作为学生
 work_is_combat_training,WORK_IS_COMBAT_TRAINING,属性_工作,自己的工作为训练学员
+work_is_fitness_trainer,WORK_IS_FITNESS_TRAINER,属性_工作,自己的工作为健身锻炼员
 work_is_cook,WORK_IS_COOK,属性_工作,自己的工作为厨师
 work_is_production_worker,WORK_IS_PRODUCTION_WORKER,属性_工作,自己的工作为生产工人
 work_is_massage_therapist,WORK_IS_MASSAGE_THERAPIST,属性_工作,自己的工作为按摩师
@@ -1107,13 +1127,19 @@ entertainment_is_steam_sauna,ENTERTAINMENT_IS_STEAM_SAUNA,属性_娱乐,自己�
 entertainment_is_hydrotherapy_treatment,ENTERTAINMENT_IS_HYDROTHERAPY_TREATMENT,属性_娱乐,自己当前时段的娱乐为水疗护理
 entertainment_is_onsen_bath,ENTERTAINMENT_IS_ONSEN_BATH,属性_娱乐,自己当前时段的娱乐为泡温泉
 
+t_wear_hat,TARGET_WEAR_HAT,属性_服装,交互对象穿着帽子
 t_not_wear_hat,TARGET_NOT_WEAR_HAT,属性_服装,交互对象没有穿着帽子
+t_wear_glass,TARGET_WEAR_GLASS,属性_服装,交互对象戴着眼镜
 t_not_wear_glass,TARGET_NOT_WEAR_GLASS,属性_服装,交互对象没有戴着眼镜
+t_wear_in_ear,TARGET_WEAR_IN_EAR,属性_服装,交互对象戴着耳饰
 t_not_wear_in_ear,TARGET_NOT_WEAR_IN_EAR,属性_服装,交互对象没有戴耳饰
+t_wear_in_neck,TARGET_WEAR_IN_NECK,属性_服装,交互对象戴着脖饰
 t_not_wear_in_neck,TARGET_NOT_WEAR_IN_NECK,属性_服装,交互对象没有戴脖饰
+t_wear_in_mouse,TARGET_WEAR_IN_MOUSE,属性_服装,交互对象戴着口饰
 t_not_wear_in_mouse,TARGET_NOT_WEAR_IN_MOUSE,属性_服装,交互对象没有戴口饰
 wear_in_up,WEAR_IN_UP,属性_服装,穿着上衣
 not_wear_in_up,NOT_WEAR_IN_UP,属性_服装,没有穿着上衣
+t_wear_in_up,TARGET_WEAR_IN_UP,属性_服装,交互对象穿着上衣
 t_not_wear_in_up,TARGET_NOT_WEAR_IN_UP,属性_服装,交互对象没有穿着上衣
 wear_bra,WEAR_BRA,属性_服装,穿着胸衣
 not_wear_bra,NOT_WEAR_BRA,属性_服装,没有穿着胸衣
@@ -1121,18 +1147,23 @@ t_wear_bra,TARGET_WEAR_BRA,属性_服装,交互对象穿着胸衣
 t_not_wear_bra,TARGET_NOT_WEAR_BRA,属性_服装,交互对象没有穿着胸衣
 t_wear_gloves,TARGET_WEAR_GLOVES,属性_服装,交互对象戴着手套
 t_not_wear_gloves,TARGET_NOT_WEAR_GLOVES,属性_服装,交互对象没有戴着手套
+t_wear_in_down,TARGET_WEAR_IN_DOWN,属性_服装,交互对象穿着下衣
 t_not_wear_in_down,TARGET_NOT_WEAR_IN_DOWN,属性_服装,交互对象没有穿着下衣
 wear_skirt,WEAR_SKIRT,属性_服装,穿着裙子
 t_wear_skirt,TARGET_WEAR_SKIRT,属性_服装,交互对象穿着裙子
 t_wear_trousers,TARGET_WEAR_TROUSERS,属性_服装,交互对象穿着裤子
 wear_pan,WEAR_PAN,属性_服装,穿着内裤
+not_wear_pan,NOT_WEAR_PAN,属性_服装,没有穿着内裤
 t_wear_pan,TARGET_WEAR_PAN,属性_服装,交互对象穿着内裤
 t_not_wear_pan,TARGET_NOT_WEAR_PAN,属性_服装,交互对象没有穿着内裤
+not_wear_bra_or_pan,NOW_WEAR_BRA_OR_PAN,属性_服装,自己没有穿着胸衣或内裤
 wear_socks,WEAR_SOCKS,属性_服装,穿着袜子
-not_wear_shoes,NOT_WEAR_SHOES,属性_服装,没有穿着鞋子
 t_wear_socks,TARGET_WEAR_SOCKS,属性_服装,交互对象穿着袜子
 t_not_wear_socks,TARGET_NOT_WEAR_SOCKS,属性_服装,交互对象没有穿着袜子
+not_wear_shoes,NOT_WEAR_SHOES,属性_服装,没有穿着鞋子
+t_wear_shoes,TARGET_WEAR_SHOES,属性_服装,交互对象穿着鞋子
 t_not_wear_shoes,TARGET_NOT_WEAR_SHOES,属性_服装,交互对象没有穿着鞋子
+t_take_weapon,TARGET_TAKE_WEAPON,属性_服装,交互对象拿着武器
 t_not_take_weapon,TARGET_NOT_TAKE_WEAPON,属性_服装,交互对象没有拿着武器
 t_not_take_extras,TARGET_NOT_TAKE_EXTRAS,属性_服装,交互对象没有拿着附属物
 cloth_off,CLOTH_OFF,属性_服装,当前全裸
@@ -1337,6 +1368,8 @@ target_now_milking_machine,TARGET_NOW_MILKING_MACHINE,道具_使用,交互对象
 target_not_milking_machine,TARGET_NOT_MILKING_MACHINE,道具_使用,交互对象没有在搾乳机
 target_now_urine_collector,TARGET_NOW_URINE_COLLECTOR,道具_使用,交互对象正在采尿器
 target_not_urine_collector,TARGET_NOT_URINE_COLLECTOR,道具_使用,交互对象没有在采尿器
+self_sleep_pills,SELF_SEELP_PIILS,道具_使用,自己已服用安眠药
+self_not_sleep_pills,SELF_NOT_SEELP_PIILS,道具_使用,自己没有服用安眠药
 target_now_birth_control_pills_before,TARGET_NOW_BIRTH_CONTROL_PILLS_BEFORE,道具_使用,交互对象已服用事前避孕药
 target_not_birth_control_pills_before,TARGET_NOT_BIRTH_CONTROL_PILLS_BEFORE,道具_使用,交互对象没有服用事前避孕药
 target_now_birth_control_pills_after,TARGET_NOW_BIRTH_CONTROL_PILLS_AFTER,道具_使用,交互对象已服用事后避孕药

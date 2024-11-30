@@ -4,7 +4,6 @@ import pickle
 import shutil
 import datetime
 import platform
-import multiprocessing
 from types import FunctionType
 from Script.Core import (
     cache_control,
@@ -454,6 +453,19 @@ def update_chara_cloth(value, tem_character):
     """
     from Script.Design import clothing
 
+    # 数据长度不一致时，重置服装数据
+    if len(value.cloth.cloth_wear) != len(game_config.config_clothing_type):
+        value.cloth.cloth_wear = attr_calculation.get_cloth_wear_zero()
+    if len(value.cloth.cloth_locker_in_shower) != len(game_config.config_clothing_type):
+        value.cloth.cloth_locker_in_shower = attr_calculation.get_shower_cloth_locker_zero()
+    if len(value.cloth.cloth_locker_in_dormitory) != len(game_config.config_clothing_type):
+        value.cloth.cloth_locker_in_dormitory = attr_calculation.get_cloth_locker_in_dormitory_zero()
+    empty_dirty_data = attr_calculation.get_zero_dirty()
+    if len(value.dirty.cloth_semen) != len(game_config.config_clothing_type):
+        value.dirty.cloth_semen = empty_dirty_data.cloth_semen
+    if len(value.dirty.cloth_locker_semen) != len(game_config.config_clothing_type):
+        value.dirty.cloth_locker_semen = empty_dirty_data.cloth_locker_semen
+
     # 跳过玩家
     if value.cid == 0:
         return 0
@@ -479,7 +491,6 @@ def update_chara_cloth(value, tem_character):
     # print(f"debug old value.cloth.cloth_wear = {value.cloth.cloth_wear}")
     if reset_cloth_flag:
         value.cloth = attr_calculation.get_cloth_zero()
-        value.cloth.cloth_wear = attr_calculation.get_cloth_wear_zero()
         for cloth_id in tem_character.Cloth:
             if cloth_id not in game_config.config_clothing_tem:
                 continue

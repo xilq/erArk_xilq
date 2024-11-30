@@ -642,6 +642,19 @@ def character_move_to_swimming_pool(character_id: int):
     general_movement_module(character_id, to_swimming_pool)
 
 
+@handle_state_machine.add_state_machine(constant.StateMachine.MOVE_TO_GYM_ROOM)
+def character_move_to_gym_room(character_id: int):
+    """
+    移动至健身区
+    Keyword arguments:
+    character_id -- 角色id
+    """
+    to_gym_room = map_handle.get_map_system_path_for_str(
+        random.choice(constant.place_data["Gym"])
+    )
+    general_movement_module(character_id, to_gym_room)
+
+
 @handle_state_machine.add_state_machine(constant.StateMachine.MOVE_TO_FOOT_BATH)
 def character_move_to_foot_bath(character_id: int):
     """
@@ -822,16 +835,34 @@ def character_move_to_rest_room(character_id: int):
     character_id -- 角色id
     """
     character_data: game_type.Character = cache.character_data[character_id]
-    # 检索当前角色所在的大场景里有没有休息室，没有的话再随机选择其他区块
-    now_position = character_data.position[0]
+    special_rest_room_list = []
     find_flag = False
-    for place in constant.place_data["Rest_Room"]:
-        if place.split("\\")[0] == now_position:
-            if map_handle.judge_scene_accessible(place,character_id) == "open":
-                to_rest_room = map_handle.get_map_system_path_for_str(place)
-                find_flag = True
-                break
-    if not find_flag:
+    # 首先检测角色所属的势力与出身地是否有专属休息室
+    chara_nation = character_data.relationship.nation
+    nation_rest_room_tag = "Nation_" + str(chara_nation)
+    if nation_rest_room_tag in constant.place_data:
+        special_rest_room_list.extend(constant.place_data[nation_rest_room_tag])
+    chara_birthplace = character_data.relationship.birthplace
+    birthplace_rest_room_tag = "Birthplace_" + str(chara_birthplace)
+    if birthplace_rest_room_tag in constant.place_data:
+        special_rest_room_list.extend(constant.place_data[birthplace_rest_room_tag])
+    # 如果有专属休息室的话，有一半几率使用该休息室
+    if len(special_rest_room_list) and random.randint(1, 2) == 1:
+        to_rest_room = map_handle.get_map_system_path_for_str(
+            random.choice(special_rest_room_list)
+        )
+        find_flag = True
+    # 不使用专属休息室的话，检索当前角色所在的大场景里有没有休息室
+    if find_flag == False:
+        now_position = character_data.position[0]
+        for place in constant.place_data["Rest_Room"]:
+            if place.split("\\")[0] == now_position:
+                if map_handle.judge_scene_accessible(place,character_id) == "open":
+                    to_rest_room = map_handle.get_map_system_path_for_str(place)
+                    find_flag = True
+                    break
+    # 没有的话再随机选择其他区块
+    if find_flag == False:
         to_rest_room = map_handle.get_map_system_path_for_str(
     random.choice(constant.place_data["Rest_Room"])
     )
@@ -1318,22 +1349,29 @@ def character_play_instrument(character_id: int):
     character_data.state = constant.CharacterStatus.STATUS_PLAY_INSTRUMENT
 
 
-@handle_state_machine.add_state_machine(constant.StateMachine.ENTERTAIN_TRAINING)
-def character_training(character_id: int):
+@handle_state_machine.add_state_machine(constant.StateMachine.ENTERTAIN_READ)
+def character_entertain_read(character_id: int):
     """
-    角色战斗训练
+    角色娱乐：读书
     Keyword arguments:
     character_id -- 角色id
     """
     character_data: game_type.Character = cache.character_data[character_id]
-    character_data.target_character_id = character_id
-    character_data.behavior.behavior_id = constant.Behavior.TRAINING
-    character_data.behavior.duration = 120
-    character_data.state = constant.CharacterStatus.STATUS_TRAINING
+    # 检查是否要借书
+    basement.check_random_borrow_book(character_id)
+
+    for book_id_all in character_data.entertainment.borrow_book_id_set:
+        book_id = book_id_all
+    book_data = game_config.config_book[book_id]
+    character_data.behavior.behavior_id = constant.Behavior.READ_BOOK
+    character_data.state = constant.CharacterStatus.STATUS_READ_BOOK
+    character_data.behavior.book_id = book_id
+    character_data.behavior.book_name = book_data.name
+    character_data.behavior.duration = 30
 
 
 @handle_state_machine.add_state_machine(constant.StateMachine.ENTERTAIN_SINGING)
-def character_training(character_id: int):
+def character_entertain_singing(character_id: int):
     """
     娱乐：唱歌
     Keyword arguments:
@@ -1983,13 +2021,11 @@ def character_get_chara_normal_cloth_and_day_equip(character_id: int):
     Keyword arguments:
     character_id -- 角色id
     """
-    clothing.get_cloth_from_dormitory_locker(character_id)
-    default.handle_adjust_body_manage_day_item(character_id, 1, game_type.CharacterStatusChange, datetime.datetime)
     character_data: game_type.Character = cache.character_data[character_id]
     character_data.target_character_id = character_id
-    character_data.behavior.behavior_id = constant.Behavior.WAIT
-    character_data.behavior.duration = 1
-    character_data.state = constant.CharacterStatus.STATUS_ARDER
+    character_data.behavior.behavior_id = constant.Behavior.GET_UP
+    character_data.behavior.duration = 3
+    character_data.state = constant.CharacterStatus.STATUS_GET_UP
 
 
 @handle_state_machine.add_state_machine(constant.StateMachine.RESET_SHOWER_STATUS_AND_GET_NORMAL_CLOTH)
@@ -2513,6 +2549,10 @@ def character_morning_salutation_1(character_id: int):
     # 特殊flag进行对应更改
     if character_data.sp_flag.morning_salutation == 1:
         character_data.sp_flag.morning_salutation = 2
+    info_draw = draw.WaitDraw()
+    info_draw.text = _("\n{0}来进行早安问候了\n").format(character_data.name)
+    info_draw.style = "gold_enrod"
+    info_draw.draw()
 
 
 @handle_state_machine.add_state_machine(constant.StateMachine.MORNING_SALUTATION_2)
@@ -2531,6 +2571,10 @@ def character_morning_salutation_2(character_id: int):
     # 特殊flag进行对应更改
     if character_data.sp_flag.morning_salutation == 1:
         character_data.sp_flag.morning_salutation = 2
+    info_draw = draw.WaitDraw()
+    info_draw.text = _("\n{0}来进行早安问候了\n").format(character_data.name)
+    info_draw.style = "gold_enrod"
+    info_draw.draw()
 
 
 @handle_state_machine.add_state_machine(constant.StateMachine.MORNING_SALUTATION_3)
@@ -2549,6 +2593,10 @@ def character_morning_salutation_2(character_id: int):
     # 特殊flag进行对应更改
     if character_data.sp_flag.morning_salutation == 1:
         character_data.sp_flag.morning_salutation = 2
+    info_draw = draw.WaitDraw()
+    info_draw.text = _("\n{0}来进行早安问候了\n").format(character_data.name)
+    info_draw.style = "gold_enrod"
+    info_draw.draw()
 
 
 @handle_state_machine.add_state_machine(constant.StateMachine.NIGHT_SALUTATION_1)
@@ -2564,6 +2612,11 @@ def character_night_salutation_1(character_id: int):
     character_data.behavior.behavior_id = constant.Behavior.NIGHT_SALUTATION_1
     character_data.behavior.duration = 30
     character_data.state = constant.CharacterStatus.STATUS_NIGHT_SALUTATION_1
+    character_data.sp_flag.night_salutation = 2
+    info_draw = draw.WaitDraw()
+    info_draw.text = _("\n{0}来进行晚安问候了\n").format(character_data.name)
+    info_draw.style = "gold_enrod"
+    info_draw.draw()
 
 
 @handle_state_machine.add_state_machine(constant.StateMachine.NIGHT_SALUTATION_2)
@@ -2580,8 +2633,11 @@ def character_night_salutation_2(character_id: int):
     character_data.behavior.duration = 5
     character_data.state = constant.CharacterStatus.STATUS_NIGHT_SALUTATION_2
     # 特殊flag进行对应更改
-    if character_data.sp_flag.night_salutation == 1:
-        character_data.sp_flag.night_salutation = 2
+    character_data.sp_flag.night_salutation = 2
+    info_draw = draw.WaitDraw()
+    info_draw.text = _("\n{0}来进行晚安问候了\n").format(character_data.name)
+    info_draw.style = "gold_enrod"
+    info_draw.draw()
 
 
 @handle_state_machine.add_state_machine(constant.StateMachine.NIGHT_SALUTATION_3)
@@ -2598,8 +2654,11 @@ def character_night_salutation_3(character_id: int):
     character_data.behavior.duration = 10
     character_data.state = constant.CharacterStatus.STATUS_NIGHT_SALUTATION_3
     # 特殊flag进行对应更改
-    if character_data.sp_flag.night_salutation == 1:
-        character_data.sp_flag.night_salutation = 2
+    character_data.sp_flag.night_salutation = 2
+    info_draw = draw.WaitDraw()
+    info_draw.text = _("\n{0}来进行晚安问候了\n").format(character_data.name)
+    info_draw.style = "gold_enrod"
+    info_draw.draw()
 
 
 @handle_state_machine.add_state_machine(constant.StateMachine.NIGHT_SALUTATION_FLAG_2)
@@ -2811,23 +2870,30 @@ def character_work_sex_exercises(character_id: int):
         character_data.state = now_exercises
 
 
-@handle_state_machine.add_state_machine(constant.StateMachine.ENTERTAIN_READ)
-def character_entertain_read(character_id: int):
+@handle_state_machine.add_state_machine(constant.StateMachine.WORK_COMBAT_TRAINING)
+def character_combat_training(character_id: int):
     """
-    角色娱乐：读书
+    角色战斗训练
     Keyword arguments:
     character_id -- 角色id
     """
     character_data: game_type.Character = cache.character_data[character_id]
-    # 检查是否要借书
-    basement.check_random_borrow_book(character_id)
+    character_data.target_character_id = character_id
+    character_data.behavior.behavior_id = constant.Behavior.TRAINING
+    character_data.behavior.duration = 120
+    character_data.state = constant.CharacterStatus.STATUS_TRAINING
 
-    for book_id_all in character_data.entertainment.borrow_book_id_set:
-        book_id = book_id_all
-    book_data = game_config.config_book[book_id]
-    character_data.behavior.behavior_id = constant.Behavior.READ_BOOK
-    character_data.state = constant.CharacterStatus.STATUS_READ_BOOK
-    character_data.behavior.book_id = book_id
-    character_data.behavior.book_name = book_data.name
-    character_data.behavior.duration = 30
+
+@handle_state_machine.add_state_machine(constant.StateMachine.WORK_FITNESS_TRAINING)
+def character_fitness_training(character_id: int):
+    """
+    角色健身锻炼
+    Keyword arguments:
+    character_id -- 角色id
+    """
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.target_character_id = character_id
+    character_data.behavior.behavior_id = constant.Behavior.EXERCISE
+    character_data.behavior.duration = 60
+    character_data.state = constant.CharacterStatus.STATUS_EXERCISE
 

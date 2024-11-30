@@ -421,7 +421,7 @@ class BODY_H_STATE:
         """
 
         self.insert_position: int = -1
-        """ 阴茎插入位置，int，-1为未插入，其他同身体部位 """
+        """ 阴茎插入位置，int，-1为未插入，0开始同身体部位，20开始同服装部位 """
         self.shoot_position_body: int = -1
         """ 身体上的射精位置，int，-1为未射精，其他同身体部位 """
         self.shoot_position_cloth: int = -1
@@ -534,6 +534,8 @@ class ACTION_INFO:
         """ 要去吃饭的餐厅，见Restaurant.csv """
         self.ask_group_sex_refuse_chara_id_list = []
         """ 拒绝群P的角色id列表 """
+        self.ask_close_door_flag: bool = False
+        """ 询问当前地点是否关门的标记，true的话则已询问过，每次玩家移动时重置 """
 
 
 class AUTHOR_FLAG:
@@ -687,6 +689,8 @@ class PLAYER_ABILITY:
         """ 催眠类型 """
         self.air_hypnosis_position: str = ""
         """ 空气催眠地点 """
+        self.carry_chara_id_in_time_stop: int = 0
+        """ 时停中正在搬运的角色id """
         self.free_in_time_stop_chara_id: int = 0
         """ 时停中允许自由活动的角色id """
 

@@ -483,6 +483,8 @@ class BehaviorEffect:
     """ 属性_经验 增加1被催眠姦经验 """
     TARGET_ADD_1_be_Hypnosis_Sex_EXPERIENCE = 360
     """ 属性_经验 交互对象增加1被催眠姦经验 """
+    TARGET_ADD_1_CLOTH_JOB_EXPERIENCE = 361
+    """ 属性_经验 交互对象增加1服装交经验 """
 
     DIRTY_RESET = 401
     """ 属性_结构体 污浊结构体归零 """
@@ -646,9 +648,9 @@ class BehaviorEffect:
     TIME_STOP_ORGASM_RELEASE = 527
     """ 指令_专用结算 （解除时停）所有角色变为时停解放状态，将时停绝顶计数转化为绝顶 """
     END_H_ADD_HPMP_MAX = 528
-    """ 指令_专用结算 （结束H）自己和交互对象根据本次H中的绝顶次数增加体力气力上限 """
+    """ 指令_专用结算 （结束H）自己和交互对象根据本次H中的绝顶次数增加体力气力上限，玩家根据射精次数增加精液量上限 """
     GROUP_SEX_END_H_ADD_HPMP_MAX = 529
-    """ 指令_专用结算 （多P结束H）在场全部角色根据本次H中的绝顶次数增加体力气力上限 """
+    """ 指令_专用结算 （多P结束H）在场全部角色根据本次H中的绝顶次数增加体力气力上限，玩家根据射精次数增加精液量上限 """
     GROUP_SEX_FAIL_ADD_JUST = 530
     """ 指令_专用结算 （多P失败）在场全部角色减体力气力，拒绝者进行邀请H失败结算 """
     BOARD_GAME_WIN_ADD_ADJUST = 532
@@ -708,6 +710,8 @@ class BehaviorEffect:
     """ 属性_服装 大浴场衣柜里的衣服转移到宿舍衣柜 """
     CLEAN_LOCKER_CLOTH_SEMEN = 648
     """ 属性_服装 清理衣柜里的衣服精液 """
+    GET_CLOTH_FROM_DORMITORY_LOCKER = 649
+    """ 属性_服装 清空身上的旧衣服，从宿舍的衣柜里穿上衣服、内衣内裤，并转移衣柜中的精液数据到穿着的衣服上 """
     UP_AND_BRA_TO_TEM = 651
     """ 属性_服装 自己的上衣和胸罩转移到临时脱下 """
     DOWN_AND_PAN_TO_TEM = 652
@@ -721,6 +725,8 @@ class BehaviorEffect:
     """ 系统量_时间 角色记录并刷新训练时间 """
     RECORD_SHOWER_TIME = 702
     """ 系统量_时间 角色记录并刷新淋浴时间 """
+    RECORD_WAKE_TIME = 703
+    """ 系统量_时间 角色记录并刷新起床时间 """
 
     MOVE_TO_TARGET_SCENE = 751
     """ 系统量_地点 移动至目标场景 """
@@ -731,44 +737,72 @@ class BehaviorEffect:
     MOVE_TO_PRE_SCENE = 761
     """ 系统量_地点 角色移动至前一场景 """
 
-    PENIS_IN_T_RESET = 801
-    """ H_阴茎位置 当前阴茎位置为交互对象_双方归零 """
-    PENIS_IN_T_HAIR = 802
-    """ H_阴茎位置 当前阴茎位置为交互对象_发交中 """
-    PENIS_IN_T_FACE = 803
-    """ H_阴茎位置 当前阴茎位置为交互对象_阴茎蹭脸中 """
-    PENIS_IN_T_MOUSE = 804
-    """ H_阴茎位置 当前阴茎位置为交互对象_口交中 """
-    PENIS_IN_T_BREAST = 805
-    """ H_阴茎位置 当前阴茎位置为交互对象_乳交中 """
-    PENIS_IN_T_AXILLA = 806
-    """ H_阴茎位置 当前阴茎位置为交互对象_腋交中 """
-    PENIS_IN_T_HAND = 807
-    """ H_阴茎位置 当前阴茎位置为交互对象_手交中 """
-    PENIS_IN_T_VAGINA = 808
-    """ H_阴茎位置 当前阴茎位置为交互对象_V插入中 """
-    PENIS_IN_T_WOMB = 809
-    """ H_阴茎位置 当前阴茎位置为交互对象_W插入中 """
-    PENIS_IN_T_ANAL = 810
-    """ H_阴茎位置 当前阴茎位置为交互对象_A插入中 """
-    PENIS_IN_T_URETHRAL = 811
-    """ H_阴茎位置 当前阴茎位置为交互对象_U插入中 """
-    PENIS_IN_T_LEG = 812
-    """ H_阴茎位置 当前阴茎位置为交互对象_腿交中 """
-    PENIS_IN_T_FOOT = 813
-    """ H_阴茎位置 当前阴茎位置为交互对象_足交中 """
-    PENIS_IN_T_TAIL = 814
-    """ H_阴茎位置 当前阴茎位置为交互对象_尾交中 """
-    PENIS_IN_T_HORN = 815
-    """ H_阴茎位置 当前阴茎位置为交互对象_阴茎蹭角中 """
-    PENIS_IN_T_EARS = 816
-    """ H_阴茎位置 当前阴茎位置为交互对象_阴茎蹭耳朵中 """
-    SCENE_ALL_CHARACTERS_PENIS_IN_RESET = 821
+    SCENE_ALL_CHARACTERS_PENIS_IN_RESET = 800
     """ H_阴茎位置 场景内所有角色的当前阴茎位置归零 """
-    CANCEL_PENIS_IN_FACE_OR_MOUSE = 831
+    PENIS_IN_T_RESET = 801
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_双方归零 """
+    PENIS_IN_T_HAIR = 802
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_发交中 """
+    PENIS_IN_T_FACE = 803
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_阴茎蹭脸中 """
+    PENIS_IN_T_MOUSE = 804
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_口交中 """
+    PENIS_IN_T_BREAST = 805
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_乳交中 """
+    PENIS_IN_T_AXILLA = 806
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_腋交中 """
+    PENIS_IN_T_HAND = 807
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_手交中 """
+    PENIS_IN_T_VAGINA = 808
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_V插入中 """
+    PENIS_IN_T_WOMB = 809
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_W插入中 """
+    PENIS_IN_T_ANAL = 810
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_A插入中 """
+    PENIS_IN_T_URETHRAL = 811
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_U插入中 """
+    PENIS_IN_T_LEG = 812
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_腿交中 """
+    PENIS_IN_T_FOOT = 813
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_足交中 """
+    PENIS_IN_T_TAIL = 814
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_尾交中 """
+    PENIS_IN_T_HORN = 815
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_阴茎蹭角中 """
+    PENIS_IN_T_EARS = 816
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_阴茎蹭耳朵中 """
+    PENIS_IN_T_HAT = 821
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_帽子交中 """
+    PENIS_IN_T_GLASSES = 822
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_眼镜交中 """
+    PENIS_IN_T_EAR_ORNAMENT = 823
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_耳饰交中 """
+    PENIS_IN_T_NECK_ORNAMENT = 824
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_脖饰交中 """
+    PENIS_IN_T_MOUTH_ORNAMENT = 825
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_口罩交中 """
+    PENIS_IN_T_TOP = 826
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_上衣交中 """
+    PENIS_IN_T_CORSET = 827
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_胸衣交中 """
+    PENIS_IN_T_GLOVES = 828
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_手套交中 """
+    PENIS_IN_T_SKIRT = 829
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_裙子交中 """
+    PENIS_IN_T_UNDERWEAR = 830
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_内裤交中 """
+    PENIS_IN_T_SOCKS = 831
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_袜子交中 """
+    PENIS_IN_T_SHOES = 832
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_鞋子交中 """
+    PENIS_IN_T_WEAPONS = 833
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_武器交中 """
+    PENIS_IN_T_TROUSERS = 834
+    """ H_阴茎位置 改变当前阴茎位置为交互对象_裤子交中 """
+    CANCEL_PENIS_IN_FACE_OR_MOUSE = 840
     """ H_阴茎位置 取消为阴茎位置交互对象_阴茎蹭脸中和口交中 """
 
-    H_IN_LOVE_HOTEL_TO_FALSE = 841
+    H_IN_LOVE_HOTEL_TO_FALSE = 871
     """ H_地点 取消自己和交互对象正在爱情旅馆中H的状态 """
 
     ITEM_OFF = 901
@@ -934,6 +968,14 @@ class BehaviorEffect:
     """ 源石技艺 开启时停 """
     TIME_STOP_OFF = 1242
     """ 源石技艺 关闭时停 """
+    TARGET_BE_CARRIED_IN_TIME_STOP = 1243
+    """ 源石技艺 将交互对象设为当前时停搬运对象 """
+    TARGET_NOT_BE_CARRIED_IN_TIME_STOP = 1244
+    """ 源石技艺 清零自己的当前时停搬运对象 """
+    TARGET_BE_FREE_IN_TIME_STOP = 1245
+    """ 源石技艺 将交互对象设为时停中自由状态（含理智消耗） """
+    TARGET_NOT_BE_FREE_IN_TIME_STOP = 1246
+    """ 源石技艺 清零自己的让某人时停中自由状态 """
 
     NPC_ACTIVE_H_ON = 1401
     """ 属性_H 自己开启主动H """
@@ -1040,7 +1082,7 @@ class SecondEffect:
     ADD_SMALL_C_FEEL = 239
     """ 增加少量Ｃ快（C感补正） """
     ADD_SMALL_P_FEEL = 240
-    """ 增加少量射精值（P感补正） """
+    """ 增加少量玩家射精值（P感补正） """
     ADD_SMALL_V_FEEL = 241
     """ 增加少量Ｖ快（V感补正） """
     ADD_SMALL_A_FEEL = 242
@@ -1193,7 +1235,7 @@ class SecondEffect:
     """ 结算多重绝顶(快乐+屈服) """
 
     PENIS_IN_T_RESET = 501
-    """ 当前阴茎位置为交互对象_双方归零 """
+    """ 改变当前阴茎位置为交互对象_双方归零 """
 
     GIVE_PAN_IN_DAY_FIRST_MEET = 511
     """ 在每日招呼时上交今天的内裤 """

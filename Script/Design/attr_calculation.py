@@ -190,7 +190,7 @@ def get_dirty_reset(old_dirty_data: game_type.DIRTY) -> game_type.DIRTY:
     for body_part in game_config.config_body_part:
         body_text = game_config.config_body_part[body_part].name
         # 如果已经有数据，则将当前数据归0
-        if len(dirty_data.body_semen) > body_part:
+        if body_part in dirty_data.body_semen:
             dirty_data.body_semen[body_part][1] = 0
             dirty_data.body_semen[body_part][2] = 0
         else:
@@ -200,7 +200,7 @@ def get_dirty_reset(old_dirty_data: game_type.DIRTY) -> game_type.DIRTY:
     for clothing_type in game_config.config_clothing_type:
         cloth_text = game_config.config_clothing_type[clothing_type].name
         # 如果已经有数据，则将当前数据归0
-        if len(dirty_data.cloth_semen) > clothing_type:
+        if clothing_type in dirty_data.cloth_semen:
             dirty_data.cloth_semen[clothing_type][1] = 0
             dirty_data.cloth_semen[clothing_type][2] = 0
         else:
@@ -218,7 +218,7 @@ def get_dirty_reset(old_dirty_data: game_type.DIRTY) -> game_type.DIRTY:
 
 def get_zero_dirty() -> game_type.DIRTY:
     """
-    重置污浊情况
+    创建一个空污浊数据
     """
     dirty_data = game_type.DIRTY()
 
@@ -249,16 +249,17 @@ def get_h_state_reset(old_h_state_data: game_type.BODY_H_STATE) -> game_type.BOD
     body_item_list = dirty_panel.body_item_list
     bondage_list = dirty_panel.bondage_list
 
-    # 身体道具
+    # 无数据则初始化
     if len(h_state_data.body_item) == 0:
         for body_item in body_item_list:
             now_list = [body_item,False,None]
             h_state_data.body_item.append(now_list)
     else:
         for i in range(len(h_state_data.body_item)):
-            # 药物部分不归零
-            if i not in {8,9,10,11,12}:
-                h_state_data.body_item[i] = [body_item_list[i],False,None]
+            # 跳过药物
+            if i in {8,9,10,11,12}:
+                continue
+            h_state_data.body_item[i] = [body_item_list[i],False,None]
 
     # 部位绝顶
     for body_part in game_config.config_body_part:
@@ -477,32 +478,32 @@ def get_experience_level_weight(experience: int) -> int:
     return grade
 
 
-def judge_grade(experience: int) -> str:
+def judge_grade(value: int) -> str:
     """
-    按能力数值评定等级
+    按数值评定等级
     Keyword arguments:
-    experience -- 能力数值
+    value -- 数值
     Return arguments:
     str -- 评级
     """
     grade = ""
-    if experience <= 0:
+    if value <= 0:
         grade = "G"
-    elif experience == 1:
+    elif value == 1:
         grade = "F"
-    elif experience == 2:
+    elif value == 2:
         grade = "E"
-    elif experience == 3:
+    elif value == 3:
         grade = "D"
-    elif experience == 4:
+    elif value == 4:
         grade = "C"
-    elif experience == 5:
+    elif value == 5:
         grade = "B"
-    elif experience == 6:
+    elif value == 6:
         grade = "A"
-    elif experience == 7:
+    elif value == 7:
         grade = "S"
-    elif experience >= 8:
+    elif value >= 8:
         grade = "EX"
     return grade
 
@@ -932,11 +933,11 @@ def hypnosis_degree_limit_calculation() -> int:
 
 def get_character_fall_level(character_id: int, minus_flag: bool = False) -> int:
     """
-    计算角色的攻略等级
-    Keyword arguments:
-    character_id -- 角色id
-    minus_flag -- 是否对隶属系输出为负数
-    Return arguments:
+    计算角色的攻略等级\n
+    Keyword arguments:\n
+    character_id -- 角色id\n
+    minus_flag -- 是否对隶属系输出为负数\n
+    Return arguments:\n
     int -- 攻略等级
     """
     from Script.Design import handle_premise

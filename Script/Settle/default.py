@@ -2467,6 +2467,93 @@ def handle_time_stop_off(
         chara_data.sp_flag.unconscious_h = 0
 
 
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.TARGET_BE_CARRIED_IN_TIME_STOP)
+def handle_target_be_carried_in_time_stop(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    交互对象变成被时停搬运状态
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.pl_ability.carry_chara_id_in_time_stop = character_data.target_character_id
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.TARGET_NOT_BE_CARRIED_IN_TIME_STOP)
+def handle_target_not_be_carried_in_time_stop(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    清零自己的当前时停搬运对象
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.pl_ability.carry_chara_id_in_time_stop = 0
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.TARGET_BE_FREE_IN_TIME_STOP)
+def handle_target_be_free_in_time_stop(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    将交互对象设为时停中自由状态（含理智消耗）
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.pl_ability.free_in_time_stop_chara_id = character_data.target_character_id
+    character_data.sanity_point = max(character_data.sanity_point - 50, 0)
+    change_data.sanity_point -= 50
+    character_data.pl_ability.today_sanity_point_cost += 50
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.TARGET_NOT_BE_FREE_IN_TIME_STOP)
+def handle_target_not_be_free_in_time_stop(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    清零自己的让某人时停中自由状态
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.pl_ability.free_in_time_stop_chara_id = 0
+
+
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.NPC_ACTIVE_H_ON)
 def handle_npc_active_h_on(
         character_id: int,
@@ -7036,28 +7123,29 @@ def handle_end_h_add_hpmp_max(
     if not add_time:
         return
     character_data: game_type.Character = cache.character_data[character_id]
-    orgasm_count = 0
-    for body_part in game_config.config_body_part:
-        orgasm_count += character_data.h_state.orgasm_count[body_part][0]
-    if orgasm_count > 0:
-        character_data.hit_point_max += orgasm_count * 2
-        character_data.mana_point_max += orgasm_count * 3
-        # 输出提示信息
-        info_draw = draw.NormalDraw()
-        info_draw.text = _("在激烈的H之后，{0}的体力上限增加了{1}，气力上限增加了{2}\n").format(character_data.name, orgasm_count * 2, orgasm_count * 3)
-        info_draw.width = width
-        info_draw.draw()
-    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    id_list = [character_id]
     if character_data.target_character_id != character_id:
+        id_list.append(character_data.target_character_id)
+    for chara_id in id_list:
+        now_character_data: game_type.Character = cache.character_data[chara_id]
+        # 统计绝顶次数
         orgasm_count = 0
         for body_part in game_config.config_body_part:
-            orgasm_count += target_data.h_state.orgasm_count[body_part][0]
+            orgasm_count += now_character_data.h_state.orgasm_count[body_part][0]
+        # 如果有绝顶，则增加体力气力上限
         if orgasm_count > 0:
-            target_data.hit_point_max += orgasm_count * 2
-            target_data.mana_point_max += orgasm_count * 3
+            now_character_data.hit_point_max += orgasm_count * 2
+            now_character_data.mana_point_max += orgasm_count * 3
+            info_text = _("在激烈的H之后，{0}的体力上限增加了{1}，气力上限增加了{2}").format(now_character_data.name, orgasm_count * 2, orgasm_count * 3)
+            # 玩家则额外增加精液量上限
+            if chara_id == 0 and now_character_data.semen_point_max < 999:
+                now_character_data.semen_point_max += orgasm_count
+                now_character_data.semen_point_max = min(now_character_data.semen_point_max, 999)
+                info_text += _("，精液量上限增加了{0}").format(orgasm_count)
+            info_text += "\n"
             # 输出提示信息
             info_draw = draw.NormalDraw()
-            info_draw.text = _("在激烈的H之后，{0}的体力上限增加了{1}，气力上限增加了{2}\n").format(target_data.name, orgasm_count * 2, orgasm_count * 3)
+            info_draw.text = info_text
             info_draw.width = width
             info_draw.draw()
 
@@ -7090,9 +7178,16 @@ def handle_group_sex_end_h_add_hpmp_max(
         if orgasm_count > 0:
             now_character_data.hit_point_max += orgasm_count * 2
             now_character_data.mana_point_max += orgasm_count * 3
+            info_text = _("在激烈的H之后，{0}的体力上限增加了{1}，气力上限增加了{2}").format(now_character_data.name, orgasm_count * 2, orgasm_count * 3)
+            # 玩家则额外增加精液量上限
+            if chara_id == 0 and now_character_data.semen_point_max < 999:
+                now_character_data.semen_point_max += orgasm_count
+                now_character_data.semen_point_max = min(now_character_data.semen_point_max, 999)
+                info_text += _("，精液量上限增加了{0}").format(orgasm_count)
+            info_text += "\n"
             # 输出提示信息
             info_draw = draw.NormalDraw()
-            info_draw.text = _("在激烈的H之后，{0}的体力上限增加了{1}，气力上限增加了{2}\n").format(now_character_data.name, orgasm_count * 2, orgasm_count * 3)
+            info_draw.text = info_text
             info_draw.width = width
             info_draw.draw()
 
@@ -9255,6 +9350,27 @@ def handle_record_shower_time(
     character_data.action_info.last_shower_time = now_time
 
 
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.RECORD_WAKE_TIME)
+def handle_record_wake_time(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    角色记录并刷新起床时间
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.action_info.wake_time = now_time
+
+
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_RESET)
 def handle_penis_in_t_reset(
         character_id: int,
@@ -9631,6 +9747,314 @@ def handle_penis_in_t_ears(
     character_data: game_type.Character = cache.character_data[character_id]
     target_data: game_type.Character = cache.character_data[character_data.target_character_id]
     target_data.h_state.insert_position = 14
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_HAT)
+def handle_penis_in_t_hat(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_帽子交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 20
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_GLASSES)
+def handle_penis_in_t_classes(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_眼镜交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 21
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_EAR_ORNAMENT)
+def handle_penis_in_t_ear_ornament(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_耳饰交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 22
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_NECK_ORNAMENT)
+def handle_penis_in_t_neck_ornament(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_脖饰交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 23
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_MOUTH_ORNAMENT)
+def handle_penis_in_t_mouth_ornament(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_口罩交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 24
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_TOP)
+def handle_penis_in_t_top(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_上衣交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 25
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_CORSET)
+def handle_penis_in_t_corset(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_胸衣交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 26
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_GLOVES)
+def handle_penis_in_t_gloves(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_手套交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 27
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_SKIRT)
+def handle_penis_in_t_skirt(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_裙子交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 28
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_UNDERWEAR)
+def handle_penis_in_t_underwear(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_内裤交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 29
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_SOCKS)
+def handle_penis_in_t_socks(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_袜子交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 30
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_SHOES)
+def handle_penis_in_t_shoes(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_鞋子交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 31
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_WEAPONS)
+def handle_penis_in_t_weapoms(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_武器交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 32
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.PENIS_IN_T_TROUSERS)
+def handle_penis_in_t_trousers(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    改变当前阴茎位置为交互对象_裤子交中
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    target_data.h_state.insert_position = 28
 
 
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.CANCEL_PENIS_IN_FACE_OR_MOUSE)

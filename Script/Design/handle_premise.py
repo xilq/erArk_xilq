@@ -770,6 +770,25 @@ def handle_still_30_minutes_before_end(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.CHARA_BEHAVIOR_END_TIME_LATEER_THAN_GAME_TIME)
+def handle_chara_behavior_end_time_lateer_than_game_time(character_id: int) -> int:
+    """
+    角色行动结束时间晚于游戏时间
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    # 当前角色的行为时间
+    character_data: game_type.Character = cache.character_data[character_id]
+    start_time = character_data.behavior.start_time
+    end_time = game_time.get_sub_date(minute=character_data.behavior.duration, old_date=start_time)
+    now_time = cache.game_time
+    if game_time.judge_date_big_or_small(end_time, now_time):
+        return 1
+    return 0
+
+
 @add_premise(constant_promise.Premise.TIME_OVER_A_YEAR)
 def handle_time_over_a_year(character_id: int) -> int:
     """
@@ -834,6 +853,18 @@ def handle_have_target(character_id: int) -> int:
     if character_data.target_character_id == character_id:
         return 0
     return 1
+
+
+@add_premise(constant_promise.Premise.HAVE_NO_TARGET)
+def handle_have_no_target(character_id: int) -> int:
+    """
+    校验角色是否没有交互对象
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_have_target(character_id)
 
 
 @add_premise(constant_promise.Premise.TARGET_NO_PLAYER)
@@ -974,6 +1005,68 @@ def handle_have_showered(character_id: int) -> int:
     if shower_time.day == now_time.day:
         return 1
     elif now_time.hour <= 6 and (game_time.count_day_for_datetime(shower_time, now_time) == 1):
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.HAVE_NOT_WAKE_UP)
+def handle_have_not_wake_up(character_id: int) -> int:
+    """
+    NPC今天还没有起床
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    now_time = cache.game_time
+    wake_up_time = character_data.action_info.wake_time
+    if wake_up_time.day != now_time.day:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.FIRST_KISS_IN_TODAY)
+def handle_first_kiss_in_today(character_id: int) -> int:
+    """
+    自己今天失去了初吻
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    if game_time.count_day_for_datetime(character_data.first_record.first_kiss_time, cache.game_time) == 0:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.FIRST_SEX_IN_TODAY)
+def handle_first_sex_in_today(character_id: int) -> int:
+    """
+    自己今天失去了V处女
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    if game_time.count_day_for_datetime(character_data.first_record.first_sex_time, cache.game_time) == 0:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.FIRST_A_SEX_IN_TODAY)
+def handle_first_a_sex_in_today(character_id: int) -> int:
+    """
+    自己今天失去了A处女
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    if game_time.count_day_for_datetime(character_data.first_record.first_a_sex_time, cache.game_time) == 0:
         return 1
     return 0
 
@@ -3947,6 +4040,24 @@ def handle_tired_le_0(character_id: int) -> int:
         return 0
 
 
+@add_premise(constant_promise.Premise.TIRED_GE_10)
+def handle_tired_ge_10(character_id: int) -> int:
+    """
+    疲劳条≥10%
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+
+    value = character_data.tired_point / 160
+    if value >= 0.1:
+        return 1
+    else:
+        return 0
+
+
 @add_premise(constant_promise.Premise.TIRED_GE_50)
 def handle_tired_ge_50(character_id: int) -> int:
     """
@@ -5371,6 +5482,21 @@ def handle_t_kiss_ge_10(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.SELF_SHY_GE_100000)
+def handle_self_shy_ge_100000(character_id: int) -> int:
+    """
+    自身羞耻小于等于100000
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    if character_data.status_data[16] <= 100000:
+        return 1
+    return 0
+
+
 @add_premise(constant_promise.Premise.SELF_FALL)
 def handle_self_fall(character_id: int) -> int:
     """
@@ -6557,6 +6683,38 @@ def handle_time_aftermoon(character_id: int) -> int:
     character_data = cache.character_data[character_id]
     now_time: datetime.datetime = character_data.behavior.start_time
     if now_time.hour >= 15 and now_time.hour <= 17:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.TIME_0_TO_9)
+def handle_time_0_to_9(character_id: int) -> int:
+    """
+    时间:0点~9点
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    now_time: datetime.datetime = character_data.behavior.start_time
+    if now_time.hour >= 0 and now_time.hour <= 9:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.TIME_18_TO_23)
+def handle_time_18_to_23(character_id: int) -> int:
+    """
+    时间:18点~23点
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    now_time: datetime.datetime = character_data.behavior.start_time
+    if now_time.hour >= 18 and now_time.hour <= 23:
         return 1
     return 0
 
@@ -8133,6 +8291,33 @@ def handle_nobody_free_in_time_stop(character_id: int) -> int:
     return 1
 
 
+@add_premise(constant_promise.Premise.NOT_CARRY_ANYBODY_IN_TIME_STOP)
+def handle_not_carry_anybody_in_time_stop(character_id: int) -> int:
+    """
+    没有在时停中搬运干员
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    pl_character_data = cache.character_data[0]
+    if pl_character_data.pl_ability.carry_chara_id_in_time_stop > 0:
+        return 0
+    return 1
+
+
+@add_premise(constant_promise.Premise.CARRY_SOMEBODY_IN_TIME_STOP)
+def handle_carry_somebody_in_time_stop(character_id: int) -> int:
+    """
+    正在时停中搬运干员
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_not_carry_anybody_in_time_stop(character_id)
+
+
 @add_premise(constant_promise.Premise.SOMEBODY_FREE_IN_TIME_STOP)
 def handle_somebody_free_in_time_stop(character_id: int) -> int:
     """
@@ -8335,6 +8520,19 @@ def handle_work_is_combat_training(character_id: int) -> int:
     """
     character_data: game_type.Character = cache.character_data[character_id]
     return character_data.work.work_type == 91
+
+
+@add_premise(constant_promise.Premise.WORK_IS_FITNESS_TRAINER)
+def handle_work_is_fitness_trainer(character_id: int) -> int:
+    """
+    自己的工作为健身锻炼员
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data: game_type.Character = cache.character_data[character_id]
+    return character_data.work.work_type == 92
 
 
 @add_premise(constant_promise.Premise.WORK_IS_COOK)
@@ -11450,6 +11648,33 @@ def handle_target_not_urine_collector(character_id: int) -> int:
     return 1
 
 
+@add_premise(constant_promise.Premise.SELF_SEELP_PIILS)
+def handle_self_sleep_pills(character_id: int) -> int:
+    """
+    自己已服用安眠药
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    if character_data.h_state.body_item[9][1]:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.SELF_NOT_SEELP_PIILS)
+def handle_self_not_sleep_pills(character_id: int) -> int:
+    """
+    自己没有服用安眠药
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_self_sleep_pills(character_id)
+
+
 @add_premise(constant_promise.Premise.TARGET_NOW_BIRTH_CONTROL_PILLS_BEFORE)
 def handle_target_now_birth_control_pills_before(character_id: int) -> int:
     """
@@ -13253,6 +13478,22 @@ def handle_favorability_ge_3(character_id: int) -> int:
         return 0
 
 
+@add_premise(constant_promise.Premise.TARGET_WEAR_HAT)
+def handle_t_wear_hat(character_id: int) -> int:
+    """
+    交互对象穿着帽子
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
+    if len(target_data.cloth.cloth_wear[0]):
+        return 1
+    return 0
+
+
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_HAT)
 def handle_t_not_wear_hat(character_id: int) -> int:
     """
@@ -13262,11 +13503,23 @@ def handle_t_not_wear_hat(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    return not handle_t_not_wear_hat(character_id)
+
+
+@add_premise(constant_promise.Premise.TARGET_WEAR_GLASS)
+def handle_t_wear_glass(character_id: int) -> int:
+    """
+    交互对象戴着眼镜
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
     character_data = cache.character_data[character_id]
     target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[0]):
-        return 0
-    return 1
+    if len(target_data.cloth.cloth_wear[1]):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_GLASS)
@@ -13278,11 +13531,23 @@ def handle_t_not_wear_glass(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    return not handle_t_wear_glass(character_id)
+
+
+@add_premise(constant_promise.Premise.TARGET_WEAR_IN_EAR)
+def handle_t_wear_in_ear(character_id: int) -> int:
+    """
+    交互对象戴耳饰
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
     character_data = cache.character_data[character_id]
     target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[1]):
-        return 0
-    return 1
+    if len(target_data.cloth.cloth_wear[2]):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_IN_EAR)
@@ -13294,11 +13559,23 @@ def handle_t_not_wear_in_ear(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    return not handle_t_wear_in_ear(character_id)
+
+
+@add_premise(constant_promise.Premise.TARGET_WEAR_IN_NECK)
+def handle_t_wear_in_neck(character_id: int) -> int:
+    """
+    交互对象戴脖饰
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
     character_data = cache.character_data[character_id]
     target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[2]):
-        return 0
-    return 1
+    if len(target_data.cloth.cloth_wear[3]):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_IN_NECK)
@@ -13310,11 +13587,23 @@ def handle_t_not_wear_in_neck(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    return not handle_t_wear_in_neck(character_id)
+
+
+@add_premise(constant_promise.Premise.TARGET_WEAR_IN_MOUSE)
+def handle_t_wear_in_mouse(character_id: int) -> int:
+    """
+    交互对象戴口饰
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
     character_data = cache.character_data[character_id]
     target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[3]):
-        return 0
-    return 1
+    if len(target_data.cloth.cloth_wear[4]):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_IN_MOUSE)
@@ -13326,11 +13615,7 @@ def handle_t_not_wear_in_mouse(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
-    character_data = cache.character_data[character_id]
-    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[4]):
-        return 0
-    return 1
+    return not handle_t_wear_in_mouse(character_id)
 
 
 @add_premise(constant_promise.Premise.WEAR_IN_UP)
@@ -13360,6 +13645,21 @@ def handle_not_wear_in_up(character_id: int) -> int:
     if handle_wear_in_up(character_id):
         return 0
     return 1
+
+
+@add_premise(constant_promise.Premise.TARGET_WEAR_IN_UP)
+def handle_t_wear_in_up(character_id: int) -> int:
+    """
+    交互对象穿着上衣
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    if handle_wear_in_up(character_data.target_character_id):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_IN_UP)
@@ -13402,10 +13702,7 @@ def handle_not_wear_bra(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
-    if handle_wear_bra(character_id):
-        return 0
-    else:
-        return 1
+    return not handle_wear_bra(character_id)
 
 
 @add_premise(constant_promise.Premise.TARGET_WEAR_BRA)
@@ -13418,10 +13715,7 @@ def handle_t_wear_bra(character_id: int) -> int:
     int -- 权重
     """
     character_data = cache.character_data[character_id]
-    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[6]):
-        return 1
-    return 0
+    return handle_wear_bra(character_data.target_character_id)
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_BRA)
@@ -13434,10 +13728,7 @@ def handle_t_not_wear_bra(character_id: int) -> int:
     int -- 权重
     """
     character_data = cache.character_data[character_id]
-    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[6]):
-        return 0
-    return 1
+    return not handle_wear_bra(character_data.target_character_id)
 
 
 @add_premise(constant_promise.Premise.TARGET_WEAR_GLOVES)
@@ -13465,11 +13756,23 @@ def handle_t_not_wear_gloves(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    return not handle_t_wear_gloves(character_id)
+
+
+@add_premise(constant_promise.Premise.TARGET_WEAR_IN_DOWN)
+def handle_t_wear_in_down(character_id: int) -> int:
+    """
+    交互对象穿着下衣
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
     character_data = cache.character_data[character_id]
     target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[7]):
-        return 0
-    return 1
+    if len(target_data.cloth.cloth_wear[8]):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_IN_DOWN)
@@ -13481,11 +13784,7 @@ def handle_t_not_wear_in_down(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
-    character_data = cache.character_data[character_id]
-    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[8]):
-        return 0
-    return 1
+    return not handle_t_wear_in_down(character_id)
 
 
 @add_premise(constant_promise.Premise.WEAR_SKIRT)
@@ -13557,6 +13856,18 @@ def handle_wear_pan(character_id: int) -> int:
         return 0
 
 
+@add_premise(constant_promise.Premise.NOT_WEAR_PAN)
+def handle_not_wear_pan(character_id: int) -> int:
+    """
+    没有穿着内裤
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_wear_pan(character_id)
+
+
 @add_premise(constant_promise.Premise.TARGET_WEAR_PAN)
 def handle_t_wear_pan(character_id: int) -> int:
     """
@@ -13582,11 +13893,21 @@ def handle_t_not_wear_pan(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
-    character_data = cache.character_data[character_id]
-    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[9]):
-        return 0
-    return 1
+    return not handle_t_wear_pan(character_id)
+
+
+@add_premise(constant_promise.Premise.NOW_WEAR_BRA_OR_PAN)
+def handle_not_wear_bra_or_pan(character_id: int) -> int:
+    """
+    自己没有穿着胸衣或内裤
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    if handle_not_wear_bra(character_id) or handle_not_wear_pan(character_id):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.WEAR_SOCKS)
@@ -13605,6 +13926,32 @@ def handle_wear_socks(character_id: int) -> int:
         return 0
 
 
+@add_premise(constant_promise.Premise.TARGET_WEAR_SOCKS)
+def handle_t_wear_socks(character_id: int) -> int:
+    """
+    交互对象穿着袜子
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return handle_wear_socks(character_data.target_character_id)
+
+
+@add_premise(constant_promise.Premise.TARGET_NOT_WEAR_SOCKS)
+def handle_t_not_wear_socks(character_id: int) -> int:
+    """
+    交互对象没有穿着袜子
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return not handle_wear_socks(character_data.target_character_id)
+
+
 @add_premise(constant_promise.Premise.NOT_WEAR_SHOES)
 def handle_not_wear_shoes(character_id: int) -> int:
     """
@@ -13621,10 +13968,10 @@ def handle_not_wear_shoes(character_id: int) -> int:
         return 1
 
 
-@add_premise(constant_promise.Premise.TARGET_WEAR_SOCKS)
-def handle_t_wear_socks(character_id: int) -> int:
+@add_premise(constant_promise.Premise.TARGET_WEAR_SHOES)
+def handle_t_wear_shoes(character_id: int) -> int:
     """
-    交互对象穿着袜子
+    交互对象穿着鞋子
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -13632,25 +13979,9 @@ def handle_t_wear_socks(character_id: int) -> int:
     """
     character_data = cache.character_data[character_id]
     target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[10]):
+    if len(target_data.cloth.cloth_wear[11]):
         return 1
     return 0
-
-
-@add_premise(constant_promise.Premise.TARGET_NOT_WEAR_SOCKS)
-def handle_t_not_wear_socks(character_id: int) -> int:
-    """
-    交互对象没有穿着袜子
-    Keyword arguments:
-    character_id -- 角色id
-    Return arguments:
-    int -- 权重
-    """
-    character_data = cache.character_data[character_id]
-    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[10]):
-        return 0
-    return 1
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_WEAR_SHOES)
@@ -13662,11 +13993,23 @@ def handle_t_not_wear_shoes(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    return not handle_t_wear_shoes(character_id)
+
+
+@add_premise(constant_promise.Premise.TARGET_TAKE_WEAPON)
+def handle_t_take_weapon(character_id: int) -> int:
+    """
+    交互对象拿着武器
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
     character_data = cache.character_data[character_id]
     target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[11]):
-        return 0
-    return 1
+    if len(target_data.cloth.cloth_wear[12]):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_TAKE_WEAPON)
@@ -13678,11 +14021,7 @@ def handle_t_not_take_weapon(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
-    character_data = cache.character_data[character_id]
-    target_data: game_type.Character = cache.character_data[character_data.target_character_id]
-    if len(target_data.cloth.cloth_wear[12]):
-        return 0
-    return 1
+    return not handle_t_take_weapon(character_id)
 
 
 @add_premise(constant_promise.Premise.TARGET_NOT_TAKE_EXTRAS)
@@ -14571,6 +14910,22 @@ def handle_assistant_help_work_1(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.ASSISTANT_FOLLOW_1)
+def handle_assistant_follow_1(character_id: int) -> int:
+    """
+    自己的助理属性中的跟随服务开启中
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.assistant_services.setdefault(2, 0)
+    if character_data.assistant_services[2]:
+        return 1
+    return 0
+
+
 @add_premise(constant_promise.Premise.ASSISTANT_HELP_WORK_0)
 def handle_assistant_help_work_0(character_id: int) -> int:
     """
@@ -14854,18 +15209,18 @@ def handle_assistant_salutation_of_ai_disable(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
-    # 早安问候不影响早饭
-    if handle_breakfast_time(character_id):
+    # 早安问候
+    if handle_time_0_to_9(character_id):
         if handle_assistant_morning_salutation_0(character_id):
             return 1
         else:
-            if handle_not_morning_salutation_time(character_id):
+            if handle_morning_salutation_flag_2(character_id):
                 return 1
             # elif handle_morning_salutation_flag_2(character_id):
             #     return 1
             return 0
-    # 晚安问候不影响睡觉
-    if handle_sleep_time(character_id):
+    # 晚安问候
+    if handle_time_18_to_23(character_id):
         if handle_assistant_night_salutation_0(character_id):
             return 1
         # 只要已开启，则必须在问候完才能睡觉
@@ -17108,6 +17463,38 @@ def handle_t_love_sense_taste_0(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.SELF_SEXUAL_IGNORANCE_0)
+def handle_self_sexual_ignorance_0(character_id: int) -> int:
+    """
+    校验自己没有性无知
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    target_data = cache.character_data[character_data.target_character_id]
+    if target_data.talent[222] == 0:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.SELF_SEXUAL_IGNORANCE_1)
+def handle_self_sexual_ignorance_1(character_id: int) -> int:
+    """
+    校验自己有性无知
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    target_data = cache.character_data[character_data.target_character_id]
+    if target_data.talent[222] == 1:
+        return 1
+    return 0
+
+
 @add_premise(constant_promise.Premise.T_LOVE_SENSE_TASTE_1)
 def handle_t_love_sense_taste_1(character_id: int) -> int:
     """
@@ -18410,6 +18797,21 @@ def handle_t_baby_1(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.SELF_IS_CHILD)
+def handle_self_is_child(character_id: int) -> int:
+    """
+    校验自己是幼女
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    if character_data.talent[102] == 1:
+        return 1
+    return 0
+
+
 @add_premise(constant_promise.Premise.T_CHILD_OR_LOLI_1)
 def handle_t_child_or_loli_1(character_id: int) -> int:
     """
@@ -18421,6 +18823,6 @@ def handle_t_child_or_loli_1(character_id: int) -> int:
     """
     character_data = cache.character_data[character_id]
     target_data = cache.character_data[character_data.target_character_id]
-    if target_data.talent[102] == 1 or target_data.talent[103] == 1 :
+    if target_data.talent[102] == 1 or target_data.talent[103] == 1:
         return 1
     return 0
