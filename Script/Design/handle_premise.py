@@ -5420,6 +5420,22 @@ def handle_t_finger_tec_l_3(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.T_FINGER_TEC_L_7)
+def handle_t_finger_tec_l_7(character_id: int) -> int:
+    """
+    校验交互对象是否指技<7
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    target_data = cache.character_data[character_data.target_character_id]
+    if target_data.ability[70] < 7:
+        return 1
+    return 0
+
+
 @add_premise(constant_promise.Premise.KISS_0)
 def handle_kiss_0(character_id: int) -> int:
     """
@@ -6015,8 +6031,8 @@ def handle_no_first_kiss(character_id: int) -> int:
     return 1
 
 
-@add_premise(constant_promise.Premise.HAVE_VIRGIN)
-def handle_have_virgin(character_id: int) -> int:
+@add_premise(constant_promise.Premise.PL_HAVE_VIRGIN)
+def handle_pl_have_virgin(character_id: int) -> int:
     """
     校验玩家是否是童贞
     Keyword arguments:
@@ -6030,8 +6046,8 @@ def handle_have_virgin(character_id: int) -> int:
     return 0
 
 
-@add_premise(constant_promise.Premise.NO_VIRGIN)
-def handle_no_virgin(character_id: int) -> int:
+@add_premise(constant_promise.Premise.PL_NO_VIRGIN)
+def handle_pl_no_virgin(character_id: int) -> int:
     """
     玩家非童贞
     Keyword arguments:
@@ -6112,6 +6128,18 @@ def handle_no_virgin(character_id: int) -> int:
     """
     character_data: game_type.Character = cache.character_data[character_id]
     return character_data.talent[0] == 0
+
+
+@add_premise(constant_promise.Premise.HAVE_VIRGIN)
+def handle_have_virgin(character_id: int) -> int:
+    """
+    校验自己是处女
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_no_virgin(character_id)
 
 
 @add_premise(constant_promise.Premise.TARGET_NO_VIRGIN)
