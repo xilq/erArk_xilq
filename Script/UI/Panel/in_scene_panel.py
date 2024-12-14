@@ -1,7 +1,7 @@
 from typing import List
 from types import FunctionType
 from Script.UI.Moudle import draw, panel
-from Script.UI.Panel import game_info_panel, see_character_info_panel, dirty_panel, cloth_panel
+from Script.UI.Panel import game_info_panel, see_character_info_panel, dirty_panel, cloth_panel, group_sex_panel
 from Script.Core import (
     get_text,
     cache_control,
@@ -25,6 +25,54 @@ line_feed = draw.NormalDraw()
 line_feed.text = "\n"
 line_feed.width = 1
 
+def judge_single_instruct_filter(instruct_id: int, now_premise_data: dict, now_type: int, use_type_filter_flag: bool = True):
+    """
+    判断单个指令是否通过过滤\n
+    Keyword arguments：\n
+    instruct_id -- 指令id\n
+    now_premise_data -- 当前记录的前提数据\n
+    now_type -- 当前指令类型\n
+    use_sub_type -- 是否使用子类过滤\n
+    Returns：\n
+    bool -- 是否通过过滤\n
+    now_premise_data -- 当前记录的前提数据\n
+    """
+    filter_judge = True
+    # 如果该指令不存在，则置为存在
+    if instruct_id not in cache.instruct_index_filter:
+        cache.instruct_index_filter[instruct_id] = 1
+    # 如果在过滤列表里，则过滤
+    if not cache.instruct_index_filter[instruct_id]:
+        filter_judge = False
+    # H子类指令过滤
+    if use_type_filter_flag and handle_premise.handle_is_h(0) and now_type == constant.InstructType.SEX:
+        now_sub_type = constant.instruct_sub_type_data[instruct_id]
+        if cache.instruct_sex_type_filter[now_sub_type] == 0:
+            filter_judge = False
+    # 前提判断
+    if filter_judge:
+        premise_judge = True
+        if instruct_id in constant.instruct_premise_data:
+            for premise in constant.instruct_premise_data[instruct_id]:
+                if premise in now_premise_data:
+                    if now_premise_data[premise]:
+                        continue
+                    premise_judge = False
+                    break
+                else:
+                    now_premise_value = handle_premise.handle_premise(premise, 0)
+                    now_premise_data[premise] = now_premise_value
+                    if not now_premise_value:
+                        premise_judge = False
+                        break
+        # 如果前提不满足，则过滤
+        if not premise_judge:
+            filter_judge = False
+    # 如果是debug模式，则强制通过
+    if cache.debug_mode:
+        filter_judge = True
+
+    return filter_judge, now_premise_data
 
 class InScenePanel:
     """
@@ -284,10 +332,17 @@ class InScenePanel:
 
             # ↓以下为身体栏的内容↓#
             if cache.scene_panel_show[2] and pl_character_data.target_character_id:
-                character_cloth_draw = dirty_panel.SeeCharacterBodyPanel(
+                character_body_draw = dirty_panel.SeeCharacterBodyPanel(
                     pl_character_data.cid, self.width, 9, 0, 0
                 )
-                character_cloth_draw.draw()
+                character_body_draw.draw()
+
+            # ↓以下为群交栏的内容↓#
+            if cache.group_sex_mode:
+                character_group_sex_draw = group_sex_panel.SeeGroupSexInfoPanel(
+                    pl_character_data.cid, self.width, 9, 0, 0
+                )
+                character_group_sex_draw.draw()
 
             # 以下为图片面板#
             if len(character_list) and cache.scene_panel_show[4]:
@@ -472,7 +527,7 @@ class SeeInstructPanel:
             if now_type in constant.instruct_type_data or now_type == constant.InstructType.SYSTEM:
                 for instruct in constant.instruct_type_data[now_type]:
                     # 检测指令是否通过过滤
-                    filter_judge, now_premise_data = self.judge_single_instruct_filter(instruct, now_premise_data, now_type)
+                    filter_judge, now_premise_data = judge_single_instruct_filter(instruct, now_premise_data, now_type)
                     if filter_judge:
                         now_instruct_list.append(instruct)
         now_instruct_list.sort()
@@ -617,53 +672,6 @@ class SeeInstructPanel:
         pl_character_data.event.chara_diy_event_flag = True
         handle_instruct.handle_instruct(constant.Instruct.CHARA_DIY_INSTRUCT)
 
-    def judge_single_instruct_filter(self, instruct_id: int, now_premise_data: dict, now_type: int):
-        """
-        判断单个指令是否通过过滤\n
-        Keyword arguments：\n
-        instruct_id -- 指令id\n
-        now_premise_data -- 当前记录的前提数据\n
-        now_type -- 当前指令类型\n
-        Returns：\n
-        bool -- 是否通过过滤\n
-        now_premise_data -- 当前记录的前提数据\n
-        """
-        filter_judge = True
-        # 如果该指令不存在，则置为存在
-        if instruct_id not in cache.instruct_index_filter:
-            cache.instruct_index_filter[instruct_id] = 1
-        # 如果在过滤列表里，则过滤
-        if not cache.instruct_index_filter[instruct_id]:
-            filter_judge = False
-        # H子类指令过滤
-        if handle_premise.handle_is_h(0) and now_type == constant.InstructType.SEX:
-            now_sub_type = constant.instruct_sub_type_data[instruct_id]
-            if cache.instruct_sex_type_filter[now_sub_type] == 0:
-                filter_judge = False
-        # 前提判断
-        if filter_judge:
-            premise_judge = True
-            if instruct_id in constant.instruct_premise_data:
-                for premise in constant.instruct_premise_data[instruct_id]:
-                    if premise in now_premise_data:
-                        if now_premise_data[premise]:
-                            continue
-                        premise_judge = False
-                        break
-                    else:
-                        now_premise_value = handle_premise.handle_premise(premise, 0)
-                        now_premise_data[premise] = now_premise_value
-                        if not now_premise_value:
-                            premise_judge = False
-                            break
-            # 如果前提不满足，则过滤
-            if not premise_judge:
-                filter_judge = False
-        # 如果是debug模式，则强制通过
-        if cache.debug_mode:
-            filter_judge = True
-
-        return filter_judge, now_premise_data
 
 class CharacterImageListDraw:
     """

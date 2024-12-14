@@ -10,7 +10,7 @@ from Script.Design import (
     cooking,
     handle_instruct,
     character_behavior,
-    basement,
+    handle_npc_ai,
     handle_premise,
     handle_premise_place
 )
@@ -18,7 +18,6 @@ from Script.Core import cache_control, constant, constant_effect, game_type, get
 from Script.Config import game_config, normal_config
 from Script.UI.Moudle import draw
 from Script.UI.Panel import event_option_panel, originium_arts, ejaculation_panel
-from Script.Settle import default_experience
 
 import random, math
 
@@ -71,6 +70,16 @@ def base_chara_hp_mp_common_settle(
     }
     hp_adjust = dregree_dict[dregree][0]
     mp_adjust = dregree_dict[dregree][1]
+    # 群交中消耗减少
+    if handle_premise.handle_is_h(character_id) and handle_premise.handle_group_sex_mode_on(character_id):
+        # 玩家减为三分之一
+        if character_id == 0:
+            hp_adjust /= 3
+            mp_adjust /= 3
+        # NPC减为二分之一
+        else:
+            hp_adjust /= 2
+            mp_adjust /= 2
     # 体力结算
     if hp_value in [-1, 1]:
         hp_value *= add_time * hp_adjust
@@ -87,7 +96,7 @@ def base_chara_hp_mp_common_settle(
         character_data.hit_point = max(1, character_data.hit_point)
         character_data.hit_point = min(character_data.hit_point_max, character_data.hit_point)
         # 检测hp1导致的疲劳
-        character_behavior.judge_character_tired_sleep(character_id)
+        handle_npc_ai.judge_character_tired_sleep(character_id)
         # 交互对象也同样
         if target_flag and target_character_id != character_id:
             if target_character_data.mana_point == 0 and hp_value < 0:
@@ -102,7 +111,7 @@ def base_chara_hp_mp_common_settle(
             target_change.hit_point += hp_value_last
             target_character_data.hit_point = max(1, target_character_data.hit_point)
             target_character_data.hit_point = min(target_character_data.hit_point_max, target_character_data.hit_point)
-            character_behavior.judge_character_tired_sleep(target_character_id)
+            handle_npc_ai.judge_character_tired_sleep(target_character_id)
     # 气力结算
     if mp_value in [-1, 1]:
         mp_value *= add_time * mp_adjust
@@ -118,7 +127,7 @@ def base_chara_hp_mp_common_settle(
             character_data.hit_point += mp_value
             change_data.hit_point += mp_value
             character_data.hit_point = max(1, character_data.hit_point)
-            character_behavior.judge_character_tired_sleep(character_id)
+            handle_npc_ai.judge_character_tired_sleep(character_id)
         # 交互对象也同样
         if target_flag and target_character_id != character_id:
             # 结算信息记录
@@ -276,6 +285,14 @@ def chara_feel_state_adjust(character_id: int, state_id: int, ability_level: int
             final_adjust += 0.1
         # 全体干员+数量*0.01
         final_adjust += len(now_token) * 0.01
+    # 群交中会因在场的其他干员人数进行调整
+    if character_data.sp_flag.is_h and handle_premise.handle_group_sex_mode_on(character_id):
+        scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
+        scene_data: game_type.Scene = cache.scene_data[scene_path_str]
+        other_npc_num = len(scene_data.character_list) - 2
+        # 最大只能吃十个人的加成
+        other_npc_num = min(10, other_npc_num)
+        final_adjust += other_npc_num * 0.02
 
     return final_adjust
 
@@ -379,6 +396,14 @@ def chara_base_state_adjust(character_id: int, state_id: int, ability_level: int
     # 催眠-敏感
     if character_data.hypnosis.increase_body_sensitivity and state_id == 12:
         final_adjust += 2
+    # 群交中会因在场的其他干员人数进行调整
+    if character_data.sp_flag.is_h and handle_premise.handle_group_sex_mode_on(character_id):
+        scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
+        scene_data: game_type.Scene = cache.scene_data[scene_path_str]
+        other_npc_num = len(scene_data.character_list) - 2
+        # 最大只能吃十个人的加成
+        other_npc_num = min(10, other_npc_num)
+        final_adjust += other_npc_num * 0.05
     # 保证最终值不为负数
     final_adjust = max(0, final_adjust)
 
@@ -2865,6 +2890,90 @@ def handle_target_orgasm_edge_off(
     handle_self_orgasm_edge_off(character_data.target_character_id, add_time, change_data, now_time)
 
 
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.ALL_GROUP_SEX_TEMPLE_ON)
+def handle_all_group_sex_temple_run_on(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    开启全群交模板，进行轮流群交
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[0]
+    character_data.h_state.all_group_sex_temple_run = True
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.ALL_GROUP_SEX_TEMPLE_OFF)
+def handle_all_group_sex_temple_run_off(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    关闭全群交模板，进行单轮群交
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[0]
+    character_data.h_state.all_group_sex_temple_run = False
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.SELF_JOIN_GROUP_SEX_ON)
+def handle_self_join_group_sex_on(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    自己开始加入群交
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.sp_flag.go_to_join_group_sex = True
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.SELF_JOIN_GROUP_SEX_OFF)
+def handle_self_join_group_sex_off(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    自己停止加入群交
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    if not add_time:
+        return
+    character_data: game_type.Character = cache.character_data[character_id]
+    character_data.sp_flag.go_to_join_group_sex = False
+
+
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.TRGET_GET_WEEKNESSS_BY_DR)
 def handle_target_get_weeknesss_by_dr(
         character_id: int,
@@ -3134,7 +3243,7 @@ def handle_group_sex_mode_on(
         now_time: datetime.datetime,
 ):
     """
-    开启多P模式
+    开启群交模式
     Keyword arguments:
     character_id -- 角色id
     add_time -- 结算时间
@@ -3152,7 +3261,7 @@ def handle_group_sex_mode_off(
         now_time: datetime.datetime,
 ):
     """
-    关闭多P模式
+    关闭群交模式
     Keyword arguments:
     character_id -- 角色id
     add_time -- 结算时间
@@ -5375,6 +5484,8 @@ def handle_self_h_state_reset(
     for second_behavior_id, behavior_data in character_data.second_behavior.items():
         if behavior_data != 0 and (second_behavior_id in range(1100,1120) or second_behavior_id in range(1200,1250)):
             character_data.second_behavior[second_behavior_id] = 0
+    # 退出H模式
+    character_data.sp_flag.is_h = 0
 
 
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.BOTH_H_STATE_RESET)
@@ -5446,8 +5557,6 @@ def handle_scene_all_characters_update_orgasm_level(
     scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
     scene_data: game_type.Scene = cache.scene_data[scene_path_str]
     for chara_id in scene_data.character_list:
-        if chara_id == 0:
-            continue
         now_character_data = cache.character_data[chara_id]
         for orgasm in range(8):
             now_data = attr_calculation.get_status_level(now_character_data.status_data[orgasm])
@@ -5475,8 +5584,6 @@ def handle_scene_all_characters_h_state_reset(
     scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
     scene_data: game_type.Scene = cache.scene_data[scene_path_str]
     for chara_id in scene_data.character_list:
-        if chara_id == 0:
-            continue
         handle_self_h_state_reset(chara_id, add_time, change_data, now_time)
 
 
@@ -6698,6 +6805,8 @@ def handle_recruit_add_just(
     change_data -- 状态变更信息记录对象
     now_time -- 结算的时间
     """
+    from Script.UI.Panel import recruit_panel
+
     if not add_time:
         return
     character_data: game_type.Character = cache.character_data[character_id]
@@ -6739,7 +6848,7 @@ def handle_recruit_add_just(
 
     # 增加对应槽的招募值，并进行结算
     cache.rhodes_island.recruit_line[select_index][0] += now_add_lust
-    basement.update_recruit()
+    recruit_panel.update_recruit()
 
 
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.INVITE_VISITOR_ADD_ADJUST)
@@ -6757,6 +6866,8 @@ def handle_invite_visitor_add_adjust(
     change_data -- 状态变更信息记录对象
     now_time -- 结算的时间
     """
+    from Script.UI.Panel import invite_visitor_panel
+
     if not add_time:
         return
     character_data: game_type.Character = cache.character_data[character_id]
@@ -6794,7 +6905,7 @@ def handle_invite_visitor_add_adjust(
 
     # 增加对应槽的邀请值，并进行结算
     cache.rhodes_island.invite_visitor[1] += now_add_lust
-    basement.update_invite_visitor()
+    invite_visitor_panel.update_invite_visitor()
 
 
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.MILK_ADD_ADJUST)
@@ -6975,22 +7086,16 @@ def handle_masturebate_add_adjust(
     if not add_time:
         return
     character_data: game_type.Character = cache.character_data[character_id]
-    # 获取最高感度部位，默认选择C
-    max_index = 2
-    max_value = 0
-    # 列表为0~7
-    body_part_list = [0, 1, 2, 3, 4, 5, 6, 7]
-    for index in body_part_list:
-        if character_data.ability[index] > max_value:
-            max_value = character_data.ability[index]
-            max_index = index
+    from Script.Design import handle_npc_ai
+    # 根据NPC的部位喜好，选择一个部位
+    part_id = handle_npc_ai.evaluate_npc_body_part_prefs(character_id)
     # 增加快感
-    base_chara_state_common_settle(character_id, add_time, max_index, 50, ability_level = character_data.ability[30], change_data = change_data)
+    base_chara_state_common_settle(character_id, add_time, part_id, 50, ability_level = character_data.ability[30], change_data = change_data)
     # 增加经验
-    character_data.experience.setdefault(max_index, 0)
-    character_data.experience[max_index] += 1
-    change_data.experience.setdefault(max_index, 0)
-    change_data.experience[max_index] += 1
+    character_data.experience.setdefault(part_id, 0)
+    character_data.experience[part_id] += 1
+    change_data.experience.setdefault(part_id, 0)
+    change_data.experience[part_id] += 1
 
 
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.DIRTY_RESET_IN_SHOWER)
@@ -7158,7 +7263,7 @@ def handle_group_sex_end_h_add_hpmp_max(
         now_time: datetime.datetime,
 ):
     """
-    （多P结束H）在场全部角色根据本次H中的绝顶次数增加体力气力上限
+    （群交结束H）在场全部角色根据本次H中的绝顶次数增加体力气力上限
     Keyword arguments:
     character_id -- 角色id
     add_time -- 结算时间
@@ -7200,7 +7305,7 @@ def handle_group_sex_fail_add_just(
         now_time: datetime.datetime,
 ):
     """
-    （多P失败）在场全部角色减体力气力，拒绝者进行邀请H失败结算
+    （群交失败）在场全部角色减体力气力，拒绝者进行邀请H失败结算
     Keyword arguments:
     character_id -- 角色id
     add_time -- 结算时间
@@ -7313,6 +7418,8 @@ def handle_read_add_adjust(
     change_data -- 状态变更信息记录对象
     now_time -- 结算的时间
     """
+    from Script.UI.Panel import borrow_book_panel
+
     if not add_time:
         return
     character_data: game_type.Character = cache.character_data[character_id]
@@ -7367,7 +7474,7 @@ def handle_read_add_adjust(
     if character_id:
         return_rate = 20 + random.randint(1,20)
         character_data.entertainment.book_return_possibility += return_rate
-        basement.check_return_book(character_id)
+        borrow_book_panel.check_return_book(character_id)
 
 
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.TEACH_ADD_ADJUST)
@@ -7385,6 +7492,7 @@ def handle_teach_add_just(
     change_data -- 状态变更信息记录对象
     now_time -- 结算的时间
     """
+    from Script.Settle import default_experience
     if not add_time:
         return
     character_data: game_type.Character = cache.character_data[character_id]
@@ -7538,6 +7646,7 @@ def handle_eat_add_just(
     change_data -- 状态变更信息记录对象
     now_time -- 结算的时间
     """
+    from Script.Settle import default_experience
     if not add_time:
         return
     # 获取角色数据

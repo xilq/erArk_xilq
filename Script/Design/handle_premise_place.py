@@ -60,7 +60,6 @@ def handle_not_in_player_scene(character_id: int) -> int:
     return 1
 
 
-
 @add_premise(constant_promise.Premise.PLAYER_COME_SCENE)
 def handle_player_come_scene(character_id: int) -> int:
     """
@@ -70,6 +69,8 @@ def handle_player_come_scene(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    if character_id == 0:
+        return 0
     pl_character_data: game_type.Character = cache.character_data[0]
     if (
         len(pl_character_data.behavior.move_src) and
@@ -92,11 +93,13 @@ def handle_player_leave_scene(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    if character_id == 0:
+        return 0
     pl_character_data: game_type.Character = cache.character_data[0]
-    target_data: game_type.Character = cache.character_data[pl_character_data.target_character_id]
+    now_character_data: game_type.Character = cache.character_data[character_id]
     if (
-            pl_character_data.behavior.move_src == target_data.position
-            and pl_character_data.behavior.move_target != target_data.position
+            pl_character_data.behavior.move_src == now_character_data.position
+            and pl_character_data.behavior.move_target != now_character_data.position
             # and pl_character_data.position != target_data.position
     ):
         return 1
@@ -112,11 +115,14 @@ def handle_target_come_scene(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    if character_id == 0:
+        return 0
+    pl_character_data: game_type.Character = cache.character_data[0]
     now_character_data: game_type.Character = cache.character_data[character_id]
     if (
-            now_character_data.behavior.move_src != cache.character_data[0].position
-            and now_character_data.behavior.move_target == cache.character_data[0].position
-            and now_character_data.position == cache.character_data[0].position
+            now_character_data.behavior.move_src != pl_character_data.position
+            and now_character_data.behavior.move_target == pl_character_data.position
+            and now_character_data.position == pl_character_data.position
     ):
         return 1
     return 0
@@ -131,6 +137,8 @@ def handle_target_leave_scene(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
+    if character_id == 0:
+        return 0
     now_character_data: game_type.Character = cache.character_data[character_id]
     if (
             now_character_data.behavior.move_src == cache.character_data[0].position
@@ -144,7 +152,7 @@ def handle_target_leave_scene(character_id: int) -> int:
 @add_premise(constant_promise.Premise.SCENE_ONLY_TWO)
 def handle_scene_only_two(character_id: int) -> int:
     """
-    该地点仅有玩家和该角色
+    该地点仅有两个角色(可以不含玩家)
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -159,7 +167,7 @@ def handle_scene_only_two(character_id: int) -> int:
 @add_premise(constant_promise.Premise.SCENE_OVER_TWO)
 def handle_scene_over_two(character_id: int) -> int:
     """
-    该地点里有除了玩家和该角色之外的人
+    该地点有超过两个角色(可以不含玩家)
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -169,6 +177,21 @@ def handle_scene_over_two(character_id: int) -> int:
     scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
     scene_data: game_type.Scene = cache.scene_data[scene_path_str]
     return len(scene_data.character_list) > 2
+
+
+@add_premise(constant_promise.Premise.SCENE_ONLY_ONE)
+def handle_scene_only_one(character_id: int) -> int:
+    """
+    该地点里没有自己外的其他角色
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data: game_type.Character = cache.character_data[character_id]
+    scene_path = map_handle.get_map_system_path_str_for_list(character_data.position)
+    scene_data: game_type.Scene = cache.scene_data[scene_path]
+    return len(scene_data.character_list) == 1
 
 
 @add_premise(constant_promise.Premise.SCENE_OVER_ONE)
@@ -184,6 +207,27 @@ def handle_scene_over_one(character_id: int) -> int:
     scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
     scene_data: game_type.Scene = cache.scene_data[scene_path_str]
     return len(scene_data.character_list) > 1
+
+
+@add_premise(constant_promise.Premise.MOVE_TO_SAME_TARGET_WITH_PL)
+def handle_move_to_same_target_with_pl(character_id: int) -> int:
+    """
+    该角色与玩家有相同的移动目标地点
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    if character_id == 0:
+        return 0
+    pl_character_data: game_type.Character = cache.character_data[0]
+    now_character_data: game_type.Character = cache.character_data[character_id]
+    if (
+            now_character_data.behavior.move_final_target == pl_character_data.behavior.move_final_target
+            or now_character_data.behavior.move_target == pl_character_data.behavior.move_target
+    ):
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.SCENE_SOMEONE_IS_H)
@@ -422,6 +466,54 @@ def handle_scene_all_fall_ge_2(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.SCENE_ALL_NOT_TIRED)
+def handle_scene_all_not_tired(character_id: int) -> int:
+    """
+    该地点有玩家以外的角色，且所有角色都未疲劳
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data: game_type.Character = cache.character_data[character_id]
+    scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
+    scene_data: game_type.Scene = cache.scene_data[scene_path_str]
+    # 场景角色数大于等于2时进行检测
+    if len(scene_data.character_list) >= 2:
+        # 遍历当前角色列表
+        for chara_id in scene_data.character_list:
+            # 遍历非玩家的角色
+            if chara_id:
+                if handle_premise.handle_hp_1(chara_id):
+                    return 0
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.SCENE_ALL_NOT_H)
+def handle_scene_all_not_h(character_id: int) -> int:
+    """
+    该地点有玩家以外的角色，且所有角色都未在H中
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data: game_type.Character = cache.character_data[character_id]
+    scene_path_str = map_handle.get_map_system_path_str_for_list(character_data.position)
+    scene_data: game_type.Scene = cache.scene_data[scene_path_str]
+    # 场景角色数大于等于2时进行检测
+    if len(scene_data.character_list) >= 2:
+        # 遍历当前角色列表
+        for chara_id in scene_data.character_list:
+            # 遍历非玩家的角色
+            if chara_id:
+                if cache.character_data[chara_id].sp_flag.is_h:
+                    return 0
+        return 1
+    return 0
+
+
 @add_premise(constant_promise.Premise.TEACHER_TEACHING_IN_CLASSROOM)
 def handle_teacher_teaching_in_classroom(character_id: int) -> int:
     """
@@ -652,6 +744,24 @@ def handle_place_door_open(character_id: int) -> int:
     now_scene_str = map_handle.get_map_system_path_str_for_list(now_position)
     now_scene_data = cache.scene_data[now_scene_str]
     if now_scene_data.close_flag == 0:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.PLACE_INSIDE_DOOR_CLOSE)
+def handle_place_inside_door_close(character_id: int) -> int:
+    """
+    地点的内隔间正关门中
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    now_position = character_data.position
+    now_scene_str = map_handle.get_map_system_path_str_for_list(now_position)
+    now_scene_data = cache.scene_data[now_scene_str]
+    if now_scene_data.close_flag == 2:
         return 1
     return 0
 
@@ -1109,6 +1219,18 @@ def handle_not_in_toilet(character_id: int) -> int:
     if "Dormitory" in now_scene_data.scene_tag:
         return 0
     return 1
+
+
+@add_premise(constant_promise.Premise.IN_TOILET_OR_DORMITORY)
+def handle_in_toilet_or_dormitory(character_id: int) -> int:
+    """
+    在洗手间或自己宿舍中
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_not_in_toilet(character_id)
 
 
 @add_premise(constant_promise.Premise.IN_REST_ROOM)

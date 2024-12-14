@@ -24,6 +24,8 @@ def handle_settle_behavior(character_id: int, now_time: datetime.datetime, instr
     now_time -- 结算时间
     event_flag -- 事件结算变量，0只事件不指令，1只指令不事件，2均结算
     """
+    from Script.UI.Panel import group_sex_panel
+
     now_character_data: game_type.Character = cache.character_data[character_id]
     player_character_data: game_type.Character = cache.character_data[0]
     change_data = game_type.CharacterStatusChange()
@@ -32,27 +34,39 @@ def handle_settle_behavior(character_id: int, now_time: datetime.datetime, instr
 
     behavior_id = now_character_data.behavior.behavior_id
     if instruct_flag > 0:
-        # 进行一段结算
-        if behavior_id in game_config.config_behavior_effect_data:
-            # 先结算口上
-            talk.handle_talk(character_id)
-            for effect_id in game_config.config_behavior_effect_data[behavior_id]:
-                constant.settle_behavior_effect_data[effect_id](character_id, add_time, change_data, now_time)
-        # 进行二段结算
-        check_second_effect(character_id, change_data)
-        # 如果是玩家对NPC的行为，则额外进行对方的二段结算
-        if character_id == 0 and now_character_data.target_character_id != 0:
-            target_change: game_type.TargetChange = change_data.target_change[now_character_data.target_character_id]
-            check_second_effect(now_character_data.target_character_id, target_change, pl_to_npc = True)
-        # 进行无意识结算
-        check_unconscious_effect(character_id, add_time, change_data, now_time)
-        # 结算上次进行聊天的时间，以重置聊天计数器#
-        change_character_talkcount_for_time(character_id, now_time)
+        # 玩家在群P模式的结算
+        if character_id == 0 and handle_premise.handle_group_sex_mode_on:
+            # 统计要执行的指令列表
+            group_sex_instruct_list, full_list_of_target_id_and_state_id = group_sex_panel.count_group_sex_instruct_list()
+            # 判定是否要进行当前行为的结算
+            # 当前行为不在群P行为列表中，且不是等待行为时结算
+            if behavior_id not in group_sex_instruct_list and behavior_id != constant.Behavior.WAIT:
+                change_data = handle_instruct_data(character_id, behavior_id, now_time, add_time, change_data)
+            # 不满足上述条件且也没有群P行为时也结算
+            elif len(group_sex_instruct_list) == 0:
+                change_data = handle_instruct_data(character_id, behavior_id, now_time, add_time, change_data)
+            # 进行群P行为的计算
+            if len(group_sex_instruct_list):
+                for now_behavior_list in full_list_of_target_id_and_state_id:
+                    # 获取当前行为的交互目标id和状态id
+                    target_chara_id_list = now_behavior_list[0]
+                    state_id = now_behavior_list[1]
+                    for target_chara_id in target_chara_id_list:
+                        # 将玩家的交互对象设为当前目标
+                        now_character_data.target_character_id = target_chara_id
+                        # 更改玩家的当前行为id
+                        now_character_data.behavior.behavior_id = state_id
+                        # 进行指令相关数据的结算
+                        change_data = handle_instruct_data(character_id, state_id, now_time, add_time, change_data)
+        # 正常情况下则直接执行结算
+        else:
+            # 进行指令相关数据的结算
+            change_data = handle_instruct_data(character_id, behavior_id, now_time, add_time, change_data)
 
     if instruct_flag != 1:
         # 主事件
         event_id = now_character_data.event.event_id
-        handle_event_data(event_id, character_id, add_time, change_data, now_time)
+        change_data = handle_event_data(event_id, character_id, add_time, change_data, now_time)
 
         # 子事件
         son_event_id = now_character_data.event.son_event_id
@@ -66,7 +80,7 @@ def handle_settle_behavior(character_id: int, now_time: datetime.datetime, instr
             son_event_draw = draw_event_text_panel.DrawEventTextPanel(son_event_id,character_id, event_config.type)
             son_event_draw.draw()
             # 进行子事件结算
-            handle_event_data(son_event_id, character_id, add_time, change_data, now_time)
+            change_data = handle_event_data(son_event_id, character_id, add_time, change_data, now_time)
 
     # target_data = game_type.Character = cache.character_data[player_character_data.target_character_id]
     # print("target_data.name :",target_data.name)
@@ -278,6 +292,41 @@ def handle_settle_behavior(character_id: int, now_time: datetime.datetime, instr
         return now_panel
 
 
+def handle_instruct_data(
+        character_id: int,
+        behavior_id: int,
+        now_time: datetime.datetime,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        ):
+    """
+    处理指令数据
+    Keyword arguments:
+    character_id -- 角色id
+    behavior_id -- 行动id
+    now_time -- 结算时间
+    add_time -- 行动已经过时间
+    change_data -- 状态变更信息记录对象
+
+    """
+    now_character_data: game_type.Character = cache.character_data[character_id]
+    # 进行一段结算
+    if behavior_id in game_config.config_behavior_effect_data:
+        # 先结算口上
+        talk.handle_talk(character_id)
+        for effect_id in game_config.config_behavior_effect_data[behavior_id]:
+            constant.settle_behavior_effect_data[effect_id](character_id, add_time, change_data, now_time)
+    # 进行二段结算
+    check_second_effect(character_id, change_data)
+    # 如果是玩家对NPC的行为，则额外进行对方的二段结算
+    if character_id == 0 and now_character_data.target_character_id != 0:
+        target_change: game_type.TargetChange = change_data.target_change[now_character_data.target_character_id]
+        check_second_effect(now_character_data.target_character_id, target_change, pl_to_npc = True)
+    # 进行无意识结算
+    check_unconscious_effect(character_id, add_time, change_data, now_time)
+    return change_data
+
+
 def handle_event_data(event_id, character_id, add_time, change_data, now_time):
     """
     处理事件数据
@@ -306,6 +355,7 @@ def handle_event_data(event_id, character_id, add_time, change_data, now_time):
                 constant.settle_behavior_effect_data[int(effect)](
                     character_id, add_time, change_data, now_time
                 )
+    return change_data
 
 
 def add_settle_behavior_effect(behavior_effect_id: int):
@@ -680,9 +730,9 @@ def judge_character_first_meet(character_id: int) -> int:
                 character_data.second_behavior[1332] = 1
             character_data.first_record.day_first_meet = 0
             # 判断上交内裤与袜子
-            if handle_premise.handle_ask_give_pan_everyday(character_id):
+            if handle_premise.handle_wear_socks(character_id) and handle_premise.handle_ask_give_pan_everyday(character_id):
                 character_data.second_behavior[1455] = 1
-            if handle_premise.handle_ask_give_socks_everyday(character_id):
+            if handle_premise.handle_wear_pan(character_id) and handle_premise.handle_ask_give_socks_everyday(character_id):
                 character_data.second_behavior[1456] = 1
 
 
@@ -695,8 +745,9 @@ def insert_position_effect(character_id: int):
 
     character_data: game_type.Character = cache.character_data[character_id]
     pl_character_data: game_type.Character = cache.character_data[0]
-    # 需要当前有阴茎插入、当前位置为玩家位置
+    # 非群交模式，当前有阴茎插入、当前位置为玩家位置
     if (
+        handle_premise.handle_group_sex_mode_off(character_id) and
         character_data.h_state.insert_position != -1 and
         character_data.position == pl_character_data.position
         ):
@@ -1326,3 +1377,4 @@ def handle_comprehensive_value_effect(character_id: int, effect_all_value_list: 
         return 1
 
     return 0
+

@@ -420,6 +420,37 @@ class BODY_H_STATE:
         [0未捆绑,1后高手缚,2直立缚,3驷马捆绑,4直臂缚,5双手缚,6菱绳缚,7龟甲缚,8团缚,9逆团缚,10吊缚,11后手吊缚,12单足吊缚,13后手观音,14苏秦背剑,15五花大绑]
         """
 
+        self.group_sex_body_template_dict: dict = {
+            "A":[
+                {
+                    "mouth": [-1, -1],
+                    "L_hand": [-1, -1],
+                    "R_hand": [-1, -1],
+                    "penis": [-1, -1],
+                    "anal": [-1, -1],
+                },
+                [[-1], -1],
+            ],
+            "B":[
+                {
+                    "mouth": [-1, -1],
+                    "L_hand": [-1, -1],
+                    "R_hand": [-1, -1],
+                    "penis": [-1, -1],
+                    "anal": [-1, -1],
+                },
+                [[-1], -1],
+            ],
+        }
+        """
+        群交模式下的部位模板\n 
+        分为模板A和模板B\n
+        模板为列表，0为全对单部位，1为阴茎侍奉\n
+        对单部位为 mouth L_hand R_hand penis anal 以上各字典部位\n
+        每个字典部位为列表，0为交互对象id，1为指令状态id\n
+        阴茎侍奉为列表，0为全交互对象id列表，1为指令状态id
+        """
+
         self.insert_position: int = -1
         """ 阴茎插入位置，int，-1为未插入，0开始同身体部位，20开始同服装部位 """
         self.shoot_position_body: int = -1
@@ -454,6 +485,12 @@ class BODY_H_STATE:
         """ 绝顶寸止，0未寸止，1正在寸止，2正常寸止解放，3寸止失败型解放 """
         self.time_stop_release: bool = False
         """ 当前为时停解放状态 """
+        self.group_sex_lock_flag: bool = False
+        """ 群交的模板锁定标记 """
+        self.all_group_sex_temple_run: bool = False
+        """ 运行全群交模板 """
+        self.npc_ai_type_in_group_sex: int = 0
+        """ 未在模板中的NPC在群交中的AI逻辑，0为无行动，1为仅自慰，2为优先自动补位、无位则自慰 """
 
 
 class FIRST_RECORD:
@@ -536,6 +573,8 @@ class ACTION_INFO:
         """ 拒绝群P的角色id列表 """
         self.ask_close_door_flag: bool = False
         """ 询问当前地点是否关门的标记，true的话则已询问过，每次玩家移动时重置 """
+        self.move_talk_time: datetime.datetime = datetime.datetime(1, 1, 1)
+        """ 角色触发移动口上的时间，用以避免短时间频繁触发该口上 """
 
 
 class AUTHOR_FLAG:
@@ -586,7 +625,7 @@ class SPECIAL_FLAG:
         self.milk: bool = 0
         """ 要挤奶状态 """
         self.masturebate: int = 0
-        """ 要自慰状态，int [0无,1去洗手间自慰,2去宿舍自慰]"""
+        """ 要自慰状态，int [0无,1去洗手间自慰,2去宿舍自慰,3群交自慰]"""
         self.masturebate_before_sleep: int = 0
         """ 睡前自慰状态，int [0无,1要自慰,2已自慰] """
         self.shower: int = 0
@@ -617,6 +656,8 @@ class SPECIAL_FLAG:
         """ 外勤委托状态，0为未外勤，否则为对应外勤委托编号 """
         self.in_diplomatic_visit: int = 0
         """ 外交访问状态，0为未访问，否则为对应出身地编号 """
+        self.go_to_join_group_sex: bool = False
+        """ 正在前往参与群交 """
 
 
 class CHARA_WORK:
@@ -848,7 +889,9 @@ class Scene:
         self.close_type: int = 0
         """ 关门类型(0无法关门,1正常关门,2小隔间关门) """
         self.close_flag: int = 0
-        """ 关门状态 """
+        """ 关门状态，同关门类型close_type(0未关门,1正常关门,2小隔间关门) """
+        self.room_area: int = 0
+        """ 房间面积(0基础10人,1标准50人,2较大100人,3无限制人数) """
         self.scene_tag: list = []
         """ 场景标签 """
         self.character_list: set = set()
@@ -1322,7 +1365,7 @@ class Cache:
         self.time_stop_mode: bool = False
         """ 时间停止模式 """
         self.group_sex_mode: bool = False
-        """ 多P模式 """
+        """ 群交模式 """
         self.game_round: int = 1
         """ 当前周目数 """
         self.all_npc_position_panel_select_type: int = 0

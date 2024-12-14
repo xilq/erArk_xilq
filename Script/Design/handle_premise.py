@@ -1164,49 +1164,77 @@ def handle_high_999(character_id: int) -> int:
 @add_premise(constant_promise.Premise.INSTRUCT_JUDGE_LOW_OBSCENITY)
 def handle_instruct_judge_low_obscenity(character_id: int) -> int:
     """
-    口上用：当前实行值足以轻度性骚扰
+    口上用：当前实行值足以对自己轻度性骚扰
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
     int -- 权重
     """
-    character_data: game_type.Character = cache.character_data[character_id]
-    if character_data.target_character_id:
-        if character.calculation_instuct_judege(0, character_data.target_character_id, _("初级骚扰"), not_draw_flag = True)[0]:
-            return 1
+    if character_id == 0:
+        return 0
+    if character.calculation_instuct_judege(0, character_id, _("初级骚扰"), not_draw_flag = True)[0]:
+        return 1
     return 0
 
 
 @add_premise(constant_promise.Premise.INSTRUCT_JUDGE_HIGH_OBSCENITY)
 def handle_instruct_judge_high_obscenity(character_id: int) -> int:
     """
-    口上用：当前实行值足以重度性骚扰
+    口上用：当前实行值足以对自己重度性骚扰
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
     int -- 权重
     """
-    character_data: game_type.Character = cache.character_data[character_id]
-    if character_data.target_character_id:
-        if character.calculation_instuct_judege(0, character_data.target_character_id, _("严重骚扰"), not_draw_flag = True)[0]:
-            return 1
+    if character_id == 0:
+        return 0
+    if character.calculation_instuct_judege(0, character_id, _("严重骚扰"), not_draw_flag = True)[0]:
+        return 1
     return 0
 
 
 @add_premise(constant_promise.Premise.INSTRUCT_JUDGE_H)
 def handle_instruct_judge_h(character_id: int) -> int:
     """
-    口上用：当前实行值足以邀请H
+    口上用：当前实行值足以对自己邀请H
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
     int -- 权重
     """
-    character_data: game_type.Character = cache.character_data[character_id]
-    if character_data.target_character_id:
-        if character.calculation_instuct_judege(0, character_data.target_character_id, _("H模式"), not_draw_flag = True)[0]:
-            return 1
+    if character_id == 0:
+        return 0
+    if character.calculation_instuct_judege(0, character_id, _("H模式"), not_draw_flag = True)[0]:
+        return 1
     return 0
+
+
+@add_premise(constant_promise.Premise.INSTRUCT_JUDGE_GROUP_SEX)
+def handle_instruct_judge_group_sex(character_id: int) -> int:
+    """
+    口上用：当前实行值足以对自己邀请群交
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    if character_id == 0:
+        return 0
+    if character.calculation_instuct_judege(0, character_id, _("群交"), not_draw_flag = True)[0]:
+        return 1
+    return 0
+
+
+@add_premise(constant_promise.Premise.INSTRUCT_NOT_JUDGE_GROUP_SEX)
+def handle_instruct_not_judge_group_sex(character_id: int) -> int:
+    """
+    口上用：当前实行值不足以对自己邀请群交
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_instruct_judge_group_sex(character_id)
 
 
 @add_premise(constant_promise.Premise.TARGET_HAVE_CHARA_DIY_INSTRUCT)
@@ -2451,7 +2479,7 @@ def handle_masturebate_flag_0(character_id: int) -> int:
 @add_premise(constant_promise.Premise.MASTUREBATE_FLAG_G_0)
 def handle_masturebate_flag_g_0(character_id: int) -> int:
     """
-    自身要自慰状态(含两类位置)
+    自身要自慰状态(含全位置)
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -2491,6 +2519,22 @@ def handle_masturebate_flag_2(character_id: int) -> int:
     """
     character_data: game_type.Character = cache.character_data[character_id]
     if character_data.sp_flag.masturebate == 2:
+        return 400
+    else:
+        return 0
+
+
+@add_premise(constant_promise.Premise.MASTUREBATE_FLAG_3)
+def handle_masturebate_flag_3(character_id: int) -> int:
+    """
+    自身要自慰状态_群交
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data: game_type.Character = cache.character_data[character_id]
+    if character_data.sp_flag.masturebate == 3:
         return 400
     else:
         return 0
@@ -5639,6 +5683,18 @@ def handle_self_fall_obey(character_id: int) -> int:
     return 0
 
 
+@add_premise(constant_promise.Premise.SELF_NOT_FALL_OBEY)
+def handle_self_not_fall_obey(character_id: int) -> int:
+    """
+    自己没有隶属系陷落素质
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_self_fall_obey(character_id)
+
+
 @add_premise(constant_promise.Premise.TARGET_NOT_FALL)
 def handle_target_not_fall(character_id: int) -> int:
     """
@@ -6745,21 +6801,6 @@ def handle_time_18_to_23(character_id: int) -> int:
     if now_time.hour >= 18 and now_time.hour <= 23:
         return 1
     return 0
-
-
-@add_premise(constant_promise.Premise.SCENE_ONLY_ONE)
-def handle_scene_only_one(character_id: int) -> int:
-    """
-    该地点里没有自己外的其他角色
-    Keyword arguments:
-    character_id -- 角色id
-    Return arguments:
-    int -- 权重
-    """
-    character_data: game_type.Character = cache.character_data[character_id]
-    scene_path = map_handle.get_map_system_path_str_for_list(character_data.position)
-    scene_data: game_type.Scene = cache.scene_data[scene_path]
-    return len(scene_data.character_list) == 1
 
 
 @add_premise(constant_promise.Premise.SELF_CHEST_IS_CLIFF)
@@ -11289,7 +11330,7 @@ def handle_t_npc_not_active_h(character_id: int) -> int:
 @add_premise(constant_promise.Premise.GROUP_SEX_FAIL_AND_SELF_AGREE)
 def handle_group_sex_fail_and_self_agree(character_id: int) -> int:
     """
-    多P邀请失败了，但自己不是拒绝者
+    群交邀请失败了，但自己不是拒绝者
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -11304,13 +11345,159 @@ def handle_group_sex_fail_and_self_agree(character_id: int) -> int:
 @add_premise(constant_promise.Premise.GROUP_SEX_FAIL_AND_SELF_REFUSE)
 def handle_group_sex_fail_and_self_refuse(character_id: int) -> int:
     """
-    多P邀请失败了，自己是拒绝者
+    群交邀请失败了，自己是拒绝者
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
     int -- 权重
     """
     return not handle_group_sex_fail_and_self_agree(character_id)
+
+
+@add_premise(constant_promise.Premise.HAVE_ONE_GRUOP_SEX_TEMPLE)
+def handle_have_one_group_sex_temple(character_id: int) -> int:
+    """
+    当前存在一个群交模板
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    group_sex_temple_flag = False
+    # 获取群交模板数据
+    pl_character_data = cache.character_data[0]
+    pl_group_sex_A_data = pl_character_data.h_state.group_sex_body_template_dict["A"]
+    # 遍历模板的对单部分
+    for body_part in pl_group_sex_A_data[0]:
+        # 如果某个部位的指令id不为-1，则返回为True
+        if pl_group_sex_A_data[0][body_part][1] != -1:
+            group_sex_temple_flag = True
+            break
+    # 如果flag为false，则继续检测对多部分
+    if not group_sex_temple_flag:
+        if pl_group_sex_A_data[1][1] != -1:
+            group_sex_temple_flag = True
+    # 返回flag
+    return group_sex_temple_flag
+
+
+@add_premise(constant_promise.Premise.HAVE_OVER_ONE_GRUOP_SEX_TEMPLE)
+def handle_have_over_one_group_sex_temple(character_id: int) -> int:
+    """
+    当前存在多个群交模板
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    group_sex_temple_flag = False
+    # 获取群交模板数据
+    pl_character_data = cache.character_data[0]
+    pl_group_sex_B_data = pl_character_data.h_state.group_sex_body_template_dict["B"]
+    # 遍历模板的对单部分
+    for body_part in pl_group_sex_B_data[0]:
+        # 如果某个部位的指令id不为-1，则返回为True
+        if pl_group_sex_B_data[0][body_part][1] != -1:
+            group_sex_temple_flag = True
+            break
+    # 如果flag为false，则继续检测对多部分
+    if not group_sex_temple_flag:
+        if pl_group_sex_B_data[1][1] != -1:
+            group_sex_temple_flag = True
+    # 返回
+    if handle_have_one_group_sex_temple(character_id) and group_sex_temple_flag:
+        return 1
+    else:
+        return 0
+
+
+@add_premise(constant_promise.Premise.ALL_GROUP_SEX_TEMPLE_RUN_ON)
+def handle_all_group_sex_temple_run_on(character_id: int) -> int:
+    """
+    开启了运行全群交模板
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    pl_character_data = cache.character_data[0]
+    return pl_character_data.h_state.all_group_sex_temple_run
+
+
+@add_premise(constant_promise.Premise.ALL_GROUP_SEX_TEMPLE_RUN_OFF)
+def handle_all_group_sex_temple_run_off(character_id: int) -> int:
+    """
+    关闭了运行全群交模板
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_all_group_sex_temple_run_on(character_id)
+
+
+@add_premise(constant_promise.Premise.NPC_AI_TYPE_0_IN_GROUP_SEX)
+def handle_npc_ai_type_0_in_group_sex(character_id: int) -> int:
+    """
+    未在模板中的NPC在群交中无行动
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    pl_character_data = cache.character_data[0]
+    return pl_character_data.h_state.npc_ai_type_in_group_sex == 0
+
+
+@add_premise(constant_promise.Premise.NPC_AI_TYPE_1_IN_GROUP_SEX)
+def handle_npc_ai_type_1_in_group_sex(character_id: int) -> int:
+    """
+    未在模板中的NPC在群交中仅自慰
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    pl_character_data = cache.character_data[0]
+    return pl_character_data.h_state.npc_ai_type_in_group_sex == 1
+
+
+@add_premise(constant_promise.Premise.NPC_AI_TYPE_2_IN_GROUP_SEX)
+def handle_npc_ai_type_2_in_group_sex(character_id: int) -> int:
+    """
+    未在模板中的NPC在群交中优先自动补位、无位则自慰
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    pl_character_data = cache.character_data[0]
+    return pl_character_data.h_state.npc_ai_type_in_group_sex == 2
+
+
+@add_premise(constant_promise.Premise.SLEF_NOW_GO_TO_JOIN_GROUP_SEX)
+def handle_self_now_go_to_join_group_sex(character_id: int) -> int:
+    """
+    自己正在前往加入群交
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return character_data.sp_flag.go_to_join_group_sex
+
+
+@add_premise(constant_promise.Premise.SLEF_NOT_GO_TO_JOIN_GROUP_SEX)
+def handle_self_not_go_to_join_group_sex(character_id: int) -> int:
+    """
+    自己没有前往加入群交
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    return not handle_self_now_go_to_join_group_sex(character_id)
 
 
 # 以下为道具系前提
@@ -14704,7 +14891,7 @@ def handle_not_unconscious_h(character_id: int) -> int:
 @add_premise(constant_promise.Premise.GROUP_SEX_MODE_ON)
 def handle_group_sex_mode_on(character_id: int) -> int:
     """
-    多P模式开启中
+    群交模式开启中
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -14716,7 +14903,7 @@ def handle_group_sex_mode_on(character_id: int) -> int:
 @add_premise(constant_promise.Premise.GROUP_SEX_MODE_OFF)
 def handle_group_sex_mode_off(character_id: int) -> int:
     """
-    多P模式未开启
+    群交模式未开启
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -15823,11 +16010,7 @@ def handle_not_follow(character_id: int) -> int:
     Return arguments:
     int -- 权重
     """
-    character_data: game_type.Character = cache.character_data[character_id]
-    if character_data.sp_flag.is_follow:
-        return 0
-    else:
-        return 1
+    return not handle_is_follow(character_id)
 
 
 @add_premise(constant_promise.Premise.IS_FOLLOW_1)

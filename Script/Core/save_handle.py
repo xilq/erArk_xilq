@@ -480,7 +480,7 @@ def update_chara_cloth(value, tem_character):
             for now_cloth_id in now_type_cloth_data:
                     # 查找该编号的服装数据是否存在，如果不存在，则重置该角色的服装数据
                     if (
-                        now_cloth_id >= 10001 and
+                        # now_cloth_id >= 10001 and
                         now_cloth_id not in game_config.config_clothing_tem
                     ):
                         reset_cloth_flag = True
@@ -551,6 +551,10 @@ def update_map(loaded_dict):
             change_map_flag = True
         if value.scene_tag != loaded_dict["scene_data"][key].scene_tag:
             loaded_dict["scene_data"][key].scene_tag = value.scene_tag
+            update_count += 1
+            change_map_flag = True
+        if not hasattr(loaded_dict["scene_data"][key], 'room_area'):
+            loaded_dict["scene_data"][key].room_area = value.room_area
             update_count += 1
             change_map_flag = True
     # 如果地图数据有变化，将地图路径也更新，同时删除不存在的地图数据

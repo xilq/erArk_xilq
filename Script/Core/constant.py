@@ -207,7 +207,7 @@ class CharacterStatus:
     STATUS_TOUCH_RING = 307
     """ 摸光环 """
     STATUS_TOUCH_WING = 308
-    """ 摸光翼 """
+    """ 摸翅膀 """
     STATUS_TOUCH_TENTACLE = 309
     """ 摸触手 """
     STATUS_TOUCH_CAR = 310
@@ -264,12 +264,6 @@ class CharacterStatus:
     """ H时被人目击闯入中断 """
     STATUS_NO_CONSCIOUS_H_END = 367
     """ 结束无意识H """
-    STATUS_ASK_GROUP_SEX = 368
-    """ 邀请多P """
-    STATUS_GROUP_SEX_END = 369
-    """ 结束多P """
-    STATUS_ASK_GROUP_SEX_FAIL = 370
-    """ 邀请多P失败 """
     STATUS_CONFESSION = 371
     """ 告白 """
     STATUS_CONFESSION_FAILED = 372
@@ -278,6 +272,20 @@ class CharacterStatus:
     """ 戴上项圈 """
     STATUS_GIVE_NECKLACE_FAILED = 374
     """ 戴上项圈失败 """
+    STATUS_ASK_GROUP_SEX = 380
+    """ 邀请群交 """
+    STATUS_ASK_GROUP_SEX_FAIL = 381
+    """ 邀请群交失败 """
+    STATUS_GROUP_SEX_END = 382
+    """ 结束群交 """
+    STATUS_GROUP_SEX_PL_HP_0_END = 383
+    """ 群交时博士体力为零中断 """
+    STATUS_GROUP_SEX_NPC_HP_0_END = 384
+    """ 群交时自己体力为零退出 """
+    STATUS_GROUP_SEX_TO_H = 385
+    """ 群交时NPC数量不足转为单人H """
+    STATUS_JOIN_GROUP_SEX = 386
+    """ 自己加入群交 """
     STATUS_SEE_H = 396
     """ 目睹玩家与其他角色H """
     STATUS_KISS_FAIL = 397
@@ -860,7 +868,7 @@ class Behavior:
     TOUCH_RING = 307
     """ 摸光环 """
     TOUCH_WING = 308
-    """ 摸光翼 """
+    """ 摸翅膀 """
     TOUCH_TENTACLE = 309
     """ 摸触手 """
     TOUCH_CAR = 310
@@ -917,12 +925,6 @@ class Behavior:
     """ H时被人目击闯入中断 """
     NO_CONSCIOUS_H_END = 367
     """ 结束无意识H """
-    ASK_GROUP_SEX = 368
-    """ 邀请多P """
-    GROUP_SEX_END = 369
-    """ 结束多P """
-    ASK_GROUP_SEX_FAIL = 370
-    """ 邀请多P失败 """
     CONFESSION = 371
     """ 告白 """
     CONFESSION_FAILED = 372
@@ -931,6 +933,20 @@ class Behavior:
     """ 戴上项圈 """
     GIVE_NECKLACE_FAILED = 374
     """ 戴上项圈失败 """
+    ASK_GROUP_SEX = 380
+    """ 邀请群交 """
+    ASK_GROUP_SEX_FAIL = 381
+    """ 邀请群交失败 """
+    GROUP_SEX_END = 382
+    """ 结束群交 """
+    GROUP_SEX_PL_HP_0_END = 383
+    """ 群交时博士体力为零中断 """
+    GROUP_SEX_NPC_HP_0_END = 384
+    """ 群交时自己体力为零退出 """
+    GROUP_SEX_TO_H = 385
+    """ 群交时NPC数量不足转为单人H """
+    JOIN_GROUP_SEX = 386
+    """ 自己加入群交 """
     SEE_H = 396
     """ 目睹玩家与其他角色H """
     KISS_FAIL = 397
@@ -1392,6 +1408,10 @@ class StateMachine:
     """ 清零洗澡状态并换上标准衣服 """
     START_MASTUREBATE_BEFORE_SLEEP = 95
     """ 进入要睡前自慰状态 """
+    JOIN_GROUP_SEX = 96
+    """ 加入群交 """
+    STOP_JOIN_GROUP_SEX = 97
+    """ 停止加入群交 """
 
     CHAT_TO_DR = 100
     """ 和玩家聊天 """
@@ -2025,6 +2045,9 @@ class SecondBehavior:
     END_FIELD_COMMISSION_AS_LEADER = 1362
     """ 以队长身份完成外勤委托归舰 """
 
+    BE_INVITED_JOIN_GROUP_SEX = 1366
+    """ 被邀请加入群交，开始前往群交地点 """
+
     APPOINNTED_AS_DIPLOMAT_LOCAL = 1371
     """ 被任命为本地外交官 """
     RELIEVED_OF_DIPLOMAT_LOCAL = 1372
@@ -2204,12 +2227,6 @@ class Instruct:
     """ 查看污浊情况 """
     INSTRUCT_FILTER = 0
     """ 指令过滤 """
-    DEBUG_MODE_ON = 0
-    """ 开启debug模式 """
-    DEBUG_MODE_OFF = 0
-    """ 关闭debug模式 """
-    DEBUG_ADJUST = 0
-    """ debug数值调整 """
     COLLECTION_NOW_PLACE = 0
     """ 收藏该地点 """
     CANCEL_COLLECTION_NOW_PLACE = 0
@@ -2218,6 +2235,12 @@ class Instruct:
     """ 系统设置 """
     CHAT_AI_SETTING = 0
     """ 文本生成AI设置 """
+    DEBUG_MODE_ON = 0
+    """ 开启debug模式 """
+    DEBUG_MODE_OFF = 0
+    """ 关闭debug模式 """
+    DEBUG_ADJUST = 0
+    """ debug数值调整 """
     TALK_QUICK_TEST = 0
     """ 快速测试口上 """
 
@@ -2242,8 +2265,10 @@ class Instruct:
     """ 做饭 """
     EAT = 0
     """ 进食 """
-    GIVE_FOOD = 0
-    """ 让对方食用 """
+    # GIVE_FOOD = 0
+    # """ 让对方食用 """
+    PUT_SELFMADE_FOOD_IN = 0
+    """ 放入正常食物 """
     REST = 0
     """ 休息 """
     DIRAY = 0
@@ -2463,7 +2488,7 @@ class Instruct:
     TOUCH_RING = 0
     """ 摸光环 """
     TOUCH_WING = 0
-    """ 摸光翼 """
+    """ 摸翅膀 """
     TOUCH_TENTACLE = 0
     """ 摸触手 """
     TOUCH_CAR = 0
@@ -2523,7 +2548,7 @@ class Instruct:
     UNCONSCIOUS_H = 0
     """ 无意识奸 """
     ASK_GROUP_SEX = 0
-    """ 邀请多P """
+    """ 邀请群交 """
 
     #性爱#
     WAIT_5_MIN_IN_H = 0
@@ -2531,7 +2556,25 @@ class Instruct:
     END_H = 0
     """ H结束 """
     GROUP_SEX_END = 0
-    """ 结束多P """
+    """ 结束群交 """
+    UNDRESS = 0
+    """ 脱衣服 """
+    CHANGE_TOP_AND_BOTTOM = 0
+    """ 交给对方 """
+    KEEP_ENJOY = 0
+    """ 继续享受 """
+    TRY_PL_ACTIVE_H = 0
+    """ 尝试掌握主动权 """
+    ORGASM_EDGE_ON = 0
+    """ 绝顶寸止 """
+    ORGASM_EDGE_OFF = 0
+    """ 绝顶解放 """
+    RUN_GROUP_SEX_TEMPLE = 0
+    """ 进行一次当前群交 """
+    RUN_ALL_GROUP_SEX_TEMPLE = 0
+    """ 进行一次轮流群交 """
+    EDIT_GROUP_SEX_TEMPLE = 0
+    """ 编辑群交行动 """
     MAKING_OUT = 0
     """ 身体爱抚 """
     KISS_H = 0
@@ -2564,12 +2607,6 @@ class Instruct:
     """ 命令对方舔自己肛门 """
     ASK_PEE = 0
     """ 命令对方小便 """
-    CHANGE_TOP_AND_BOTTOM = 0
-    """ 交给对方 """
-    KEEP_ENJOY = 0
-    """ 继续享受 """
-    TRY_PL_ACTIVE_H = 0
-    """ 尝试掌握主动权 """
     SEDECU = 0
     """ 诱惑 """
     HANDJOB = 0
@@ -2780,12 +2817,7 @@ class Instruct:
     """ 泡泡浴 """
     GIVE_BLOWJOB = 0
     """ 给对方口交 """
-    UNDRESS = 0
-    """ 脱衣服 """
-    ORGASM_EDGE_ON = 0
-    """ 绝顶寸止 """
-    ORGASM_EDGE_OFF = 0
-    """ 绝顶解放 """
+
 
 
 i = 0
@@ -2805,6 +2837,8 @@ instruct_type_data: Dict[int, Set] = {}
 """ 指令类型拥有的指令集合 """
 instruct_sub_type_data: Dict[int, int] = {}
 """ 指令的子类型数据，指令id:子类id """
+state_id_to_instruct_id: Dict[int, int] = {}
+""" 从状态id获取指令id，状态id:指令id """
 instruct_premise_data: Dict[int, Set] = {}
 """ 指令显示的所需前提集合 """
 handle_state_machine_data: Dict[int, FunctionType] = {}
@@ -2841,7 +2875,7 @@ first_NPC_name_set = {_("阿米娅"),_("凯尔希"),_("可露希尔"),_("特蕾�
 ban_NPC_name_set = {_("普瑞赛斯"),_("老天师"),_("魔王"),_("菈玛莲"),_("塔露拉"),_("莉泽洛特"),_("希尔德加德"),_("坎黛拉"),_("克丽斯腾"),_("爱布拉娜"),_("温德米尔"),_("赫拉提娅"),_("文月"),_("年"),_("夕"),_("令"),_("黍")}
 """ 无法直接招募到的NPC的名字 """
 
-special_end_H_list = [Behavior.H_INTERRUPT, Behavior.H_HP_0, Behavior.T_H_HP_0]
+special_end_H_list = [Behavior.H_INTERRUPT, Behavior.H_HP_0, Behavior.T_H_HP_0, Behavior.GROUP_SEX_PL_HP_0_END]
 """ 意外中断H的行为id列表 """
 
 chat_ai_model_list = ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'gemini-1.5-pro', 'gemini-1.5-flash']

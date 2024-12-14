@@ -71,6 +71,7 @@ ai的目标,,,,
 90,92,masturebate_flag_2|in_dor,12,当前要自慰_宿舍，已在宿舍，则自慰
 91,95,ask_masturbation_before_sleep|sleep_flag_1|in_dor|masturebate_bofore_sleep_flag_0,11,自己被要求每天晚上睡前都要自慰，要睡觉状态下，且已在宿舍，自身没有要睡前自慰状态，则进入要睡前自慰状态
 92,92,sleep_flag_1|in_dor|masturebate_bofore_sleep_flag_1,12,要睡觉状态下，且已在宿舍，自身要睡前自慰状态，则自慰
+93,92,group_sex_mode_on|place_0|masturebate_flag_3,12,群交模式开启中，与玩家处于相同地点，自身要自慰状态_群交，则自慰
 
 100,100,normal_1267|not_unconscious_flag_5|place_0|pl_action_not_sleep,3,1267正常（可能AI跟随、服装异常或意识模糊），没有被空气催眠，和玩家在一个房间里，玩家没有在睡觉，则有可能随机和玩家聊天
 101,101,normal_1267|not_unconscious_flag_5|place_0|pl_action_not_sleep,3,1267正常（可能AI跟随、服装异常或意识模糊），没有被空气催眠，和玩家在一个房间里，玩家没有在睡觉，则有可能随机和玩家身体接触
@@ -243,10 +244,15 @@ ai的目标,,,,
 545,711,place_0|night_salutation_flag_1|pl_action_sleep|assistant_night_salutation_3,42,在玩家位置，自身要晚安问候状态（权重100），玩家正在睡觉，自己的助理属性中的晚安问候服务为晚安咬，则晚安咬
 546,712,place_0|night_salutation_flag_1|pl_action_sleep|assistant_night_salutation_1,42,在玩家位置，自身要晚安问候状态（权重100），玩家正在睡觉，自己的助理属性中的晚安问候服务为催睡觉，则变为已晚安问候
 
-601,40,normal_2_5_6|place_door_open|place_is_h|not_in_dor,0,自己256正常，当前地点的门开着，目睹玩家和其他角色H，且不在自己宿舍里，则逃回自己宿舍
+601,40,normal_2_5_6|place_door_open|place_is_h|not_in_dor|self_not_go_to_join_group_sex,0,自己256正常，当前地点的门开着，目睹玩家和其他角色H，且不在自己宿舍里，自己没有前往加入群交，则逃回自己宿舍或加入其中
+603,96,self_now_go_to_join_group_sex|place_0|group_sex_mode_on,0,自己正在前往加入群交，自己在玩家位置，群交模式开启中，则加入群交
+604,97,self_now_go_to_join_group_sex|place_0|group_sex_mode_off,0,自己正在前往加入群交，自己在玩家位置，群交模式未开启，则停止加入群交
 
 701,1,normal_1|unconscious_flag_5,1,1正常（基础正常），自身被空气催眠，则原地待机10分钟
 
-801,651,normal_all|work_is_sex_trainee|ask_one_exercises|to_work_time|not_in_humiliation_room,21,正常状态下，工作是性爱练习生，自己被要求进行了至少一项练习，在到岗时间，如果不在调教室，则去调教室
-802,651,normal_all|work_is_sex_trainee|ask_one_exercises|work_time|not_in_humiliation_room,21,正常状态下，工作是性爱练习生，自己被要求进行了至少一项练习，在工作时间，如果不在调教室，则去调教室
-803,317,normal_all_except_special_hypnosis|work_is_sex_trainee|ask_one_exercises|work_time|in_humiliation_room,22,正常状态下或被空气或体控催眠中，自己被要求进行了至少一项练习，工作是性爱练习生，在工作时间，如果在调教室，则开始性爱练习
+801,502,normal_all|work_is_sex_trainee|ask_one_exercises|to_work_time|self_not_fall_obey|not_in_dor,21,正常状态下，工作是性爱练习生，自己被要求进行了至少一项练习，在到岗时间，自己没有隶属系陷落素质，如果不在自己宿舍，则去自己宿舍
+802,502,normal_all|work_is_sex_trainee|ask_one_exercises|work_time|self_not_fall_obey|not_in_dor,21,正常状态下，工作是性爱练习生，自己被要求进行了至少一项练习，在工作时间，自己没有隶属系陷落素质，如果不在自己宿舍，则去自己宿舍
+803,317,normal_all_except_special_hypnosis|work_is_sex_trainee|ask_one_exercises|work_time|self_not_fall_obey|in_dor,22,正常状态下或被空气或体控催眠中，自己被要求进行了至少一项练习，工作是性爱练习生，在工作时间，自己没有隶属系陷落素质，如果在自己宿舍，则开始性爱练习
+804,651,normal_all|work_is_sex_trainee|ask_one_exercises|to_work_time|self_fall_obey|not_in_humiliation_room,21,正常状态下，工作是性爱练习生，自己被要求进行了至少一项练习，在到岗时间，自己有隶属系陷落素质，如果不在调教室，则去调教室
+805,651,normal_all|work_is_sex_trainee|ask_one_exercises|work_time|self_fall_obey|not_in_humiliation_room,21,正常状态下，工作是性爱练习生，自己被要求进行了至少一项练习，在工作时间，自己有隶属系陷落素质，如果不在调教室，则去调教室
+806,317,normal_all_except_special_hypnosis|work_is_sex_trainee|ask_one_exercises|work_time|self_fall_obey|in_humiliation_room,22,正常状态下或被空气或体控催眠中，自己被要求进行了至少一项练习，工作是性爱练习生，在工作时间，自己有隶属系陷落素质，如果在调教室，则开始性爱练习
