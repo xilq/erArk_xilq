@@ -158,8 +158,8 @@ def handle_comprehensive_value_premise(character_id: int, premise_all_value_list
         if final_character_id == 0:
             return 0
 
-    # 进行数值B的判别,A能力,T素质,Time时间,J宝珠,E经验,S状态,F好感度,Flag作者用flag,X信赖,G攻略程度,Instruct指令,Son子嵌套事件,OtherChara其他角色在场
-    if len(premise_all_value_list[1]) > 1 and "Time" not in premise_all_value_list[1]:
+    # 进行数值B的判别,A能力,T素质,Time时间,J宝珠,E经验,S状态,F好感度,Flag作者用flag,X信赖,G攻略程度,Instruct指令,Son子嵌套事件,OtherChara其他角色在场,Dirty污浊
+    if len(premise_all_value_list[1]) > 1 and "Time" not in premise_all_value_list[1] and "Dirty" not in premise_all_value_list[1]:
         type_son_id = int(premise_all_value_list[1].split("|")[1])
     if "Son" in premise_all_value_list[1]:
         return 0
@@ -184,6 +184,16 @@ def handle_comprehensive_value_premise(character_id: int, premise_all_value_list
             final_value = final_character_data.favorability[0]
     elif premise_all_value_list[1][0] == "X":
         final_value = final_character_data.trust
+    elif premise_all_value_list[1][0] == "D":
+        if "Dirty" in premise_all_value_list[1]:
+            b2_value = premise_all_value_list[1].split("Dirty|")[1]
+            part_type = b2_value[0]
+            part_cid = int(b2_value[1:])
+            # 区分是身体还是服装
+            if part_type == "B":
+                final_value = final_character_data.dirty.body_semen[part_cid][1]
+            else:
+                final_value = final_character_data.dirty.cloth_semen[part_cid][1]
 
     # 进行方式C和数值D的判别
     judge_value = int(premise_all_value_list[3])
@@ -11265,6 +11275,188 @@ def handle_self_orgasm_edge_relase_or_time_stop_orgasm_relase(character_id: int)
     return 0
 
 
+@add_premise(constant_promise.Premise.SELF_PLURAL_ORGASM_HAVE_N)
+def handle_self_plural_orgasm_have_N(character_id: int) -> int:
+    """
+    自己的本次多重绝顶中包含N绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return 0 in character_data.h_state.plural_orgasm_set
+
+
+@add_premise(constant_promise.Premise.TARGET_PLURAL_ORGASM_HAVE_N)
+def handle_target_plural_orgasm_have_N(character_id: int) -> int:
+    """
+    交互对象的本次多重绝顶中包含N绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return handle_self_plural_orgasm_have_N(character_data.target_character_id)
+
+
+@add_premise(constant_promise.Premise.SELF_PLURAL_ORGASM_HAVE_B)
+def handle_self_plural_orgasm_have_B(character_id: int) -> int:
+    """
+    自己的本次多重绝顶中包含B绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return 1 in character_data.h_state.plural_orgasm_set
+
+
+@add_premise(constant_promise.Premise.TARGET_PLURAL_ORGASM_HAVE_B)
+def handle_target_plural_orgasm_have_B(character_id: int) -> int:
+    """
+    交互对象的本次多重绝顶中包含B绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return handle_self_plural_orgasm_have_B(character_data.target_character_id)
+
+
+@add_premise(constant_promise.Premise.SELF_PLURAL_ORGASM_HAVE_C)
+def handle_self_plural_orgasm_have_C(character_id: int) -> int:
+    """
+    自己的本次多重绝顶中包含C绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return 2 in character_data.h_state.plural_orgasm_set
+
+
+@add_premise(constant_promise.Premise.TARGET_PLURAL_ORGASM_HAVE_C)
+def handle_target_plural_orgasm_have_C(character_id: int) -> int:
+    """
+    交互对象的本次多重绝顶中包含C绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return handle_self_plural_orgasm_have_C(character_data.target_character_id)
+
+
+@add_premise(constant_promise.Premise.SELF_PLURAL_ORGASM_HAVE_V)
+def handle_self_plural_orgasm_have_V(character_id: int) -> int:
+    """
+    自己的本次多重绝顶中包含V绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return 4 in character_data.h_state.plural_orgasm_set
+
+
+@add_premise(constant_promise.Premise.TARGET_PLURAL_ORGASM_HAVE_V)
+def handle_target_plural_orgasm_have_V(character_id: int) -> int:
+    """
+    交互对象的本次多重绝顶中包含V绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return handle_self_plural_orgasm_have_V(character_data.target_character_id)
+
+
+@add_premise(constant_promise.Premise.SELF_PLURAL_ORGASM_HAVE_A)
+def handle_self_plural_orgasm_have_A(character_id: int) -> int:
+    """
+    自己的本次多重绝顶中包含A绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return 5 in character_data.h_state.plural_orgasm_set
+
+
+@add_premise(constant_promise.Premise.TARGET_PLURAL_ORGASM_HAVE_A)
+def handle_target_plural_orgasm_have_A(character_id: int) -> int:
+    """
+    交互对象的本次多重绝顶中包含A绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return handle_self_plural_orgasm_have_A(character_data.target_character_id)
+
+
+@add_premise(constant_promise.Premise.SELF_PLURAL_ORGASM_HAVE_U)
+def handle_self_plural_orgasm_have_U(character_id: int) -> int:
+    """
+    自己的本次多重绝顶中包含U绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return 6 in character_data.h_state.plural_orgasm_set
+
+
+@add_premise(constant_promise.Premise.TARGET_PLURAL_ORGASM_HAVE_U)
+def handle_target_plural_orgasm_have_U(character_id: int) -> int:
+    """
+    交互对象的本次多重绝顶中包含U绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return handle_self_plural_orgasm_have_U(character_data.target_character_id)
+
+
+@add_premise(constant_promise.Premise.SELF_PLURAL_ORGASM_HAVE_W)
+def handle_self_plural_orgasm_have_W(character_id: int) -> int:
+    """
+    自己的本次多重绝顶中包含W绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return 7 in character_data.h_state.plural_orgasm_set
+
+
+@add_premise(constant_promise.Premise.TARGET_PLURAL_ORGASM_HAVE_W)
+def handle_target_plural_orgasm_have_W(character_id: int) -> int:
+    """
+    交互对象的本次多重绝顶中包含W绝顶
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    character_data = cache.character_data[character_id]
+    return handle_self_plural_orgasm_have_W(character_data.target_character_id)
+
+
 @add_premise(constant_promise.Premise.NPC_ACTIVE_H)
 def handle_npc_active_h(character_id: int) -> int:
     """
@@ -11473,6 +11665,19 @@ def handle_npc_ai_type_2_in_group_sex(character_id: int) -> int:
     """
     pl_character_data = cache.character_data[0]
     return pl_character_data.h_state.npc_ai_type_in_group_sex == 2
+
+
+@add_premise(constant_promise.Premise.NPC_AI_TYPE_3_IN_GROUP_SEX)
+def handle_npc_ai_type_3_in_group_sex(character_id: int) -> int:
+    """
+    未在模板中的NPC在群交中随机抢占替换当前位置，无位则自慰
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    pl_character_data = cache.character_data[0]
+    return pl_character_data.h_state.npc_ai_type_in_group_sex == 3
 
 
 @add_premise(constant_promise.Premise.SLEF_NOW_GO_TO_JOIN_GROUP_SEX)
@@ -14927,7 +15132,7 @@ def handle_option_son(character_id: int) -> int:
 @add_premise(constant_promise.Premise.THIS_EVENT_IN_TRIGGERED_RECORD)
 def handle_this_event_in_triggered_record(character_id: int) -> int:
     """
-    该事件在已触发记录中(需搭配记录结算)
+    该事件在总次数已触发记录中(需搭配记录结算)
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -14941,7 +15146,35 @@ def handle_this_event_in_triggered_record(character_id: int) -> int:
 @add_premise(constant_promise.Premise.THIS_EVENT_NOT_IN_TRIGGERED_RECORD)
 def handle_this_event_not_in_triggered_record(character_id: int) -> int:
     """
-    该事件不在已触发记录中(需搭配记录结算)
+    该事件不在总次数已触发记录中(需搭配记录结算)
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    # 本前提在以下地方进行调用，此处不进行实际处理
+    # Script/Design/event.py#L11
+    return 0
+
+
+@add_premise(constant_promise.Premise.THIS_EVENT_IN_TODAY_TRIGGERED_RECORD)
+def handle_this_event_in_today_triggered_record(character_id: int) -> int:
+    """
+    该事件在今日已触发记录中(需搭配记录结算)
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    # 本前提在以下地方进行调用，此处不进行实际处理
+    # Script/Design/event.py#L11
+    return 0
+
+
+@add_premise(constant_promise.Premise.THIS_EVENT_NOT_IN_TODAY_TRIGGERED_RECORD)
+def handle_this_event_not_in_today_triggered_record(character_id: int) -> int:
+    """
+    该事件不在今日已触发记录中(需搭配记录结算)
     Keyword arguments:
     character_id -- 角色id
     Return arguments:
@@ -15503,6 +15736,26 @@ def handle_assistant_live_together_off(character_id: int) -> int:
     if handle_assistant_live_together_on(character_id):
         return 0
     return 1
+
+
+@add_premise(constant_promise.Premise.PL_ASSISTANT_CHANGE_EVERY_WEEK_ON)
+def handle_pl_assistant_change_every_week_on(character_id: int) -> int:
+    """
+    玩家设置了每周一轮换助理
+    Keyword arguments:
+    character_id -- 角色id
+    Return arguments:
+    int -- 权重
+    """
+    pl_character_data: game_type.Character = cache.character_data[0]
+    assistant_chara_id = pl_character_data.assistant_character_id
+    if assistant_chara_id == 0:
+        return 0
+    assistant_character_data: game_type.Character = cache.character_data[assistant_chara_id]
+    assistant_character_data.assistant_services.setdefault(10, 0)
+    if assistant_character_data.assistant_services[10] == 1:
+        return 1
+    return 0
 
 
 @add_premise(constant_promise.Premise.ASK_GIVE_PAN_EVERYDAY)

@@ -3221,7 +3221,7 @@ def handle_add_this_event_to_already_triggered(
         now_time: datetime.datetime,
 ):
     """
-    将玩家当前触发的事件加入已触发记录
+    将玩家当前触发的事件加入总次数已触发记录
     Keyword arguments:
     character_id -- 角色id
     add_time -- 结算时间
@@ -3233,6 +3233,28 @@ def handle_add_this_event_to_already_triggered(
         cache.taiggered_event_record.add(player_character_data.event.son_event_id)
     else:
         cache.taiggered_event_record.add(player_character_data.event.event_id)
+
+
+@settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.ADD_THIS_EVENT_TO_TODAY_TRIGGERED_RECORD)
+def handle_add_this_event_to_today_already_triggered(
+        character_id: int,
+        add_time: int,
+        change_data: game_type.CharacterStatusChange,
+        now_time: datetime.datetime,
+):
+    """
+    将玩家当前触发的事件加入今日已触发记录
+    Keyword arguments:
+    character_id -- 角色id
+    add_time -- 结算时间
+    change_data -- 状态变更信息记录对象
+    now_time -- 结算的时间
+    """
+    player_character_data: game_type.Character = cache.character_data[0]
+    if player_character_data.event.son_event_id:
+        cache.today_taiggered_event_record.add(player_character_data.event.son_event_id)
+    else:
+        cache.today_taiggered_event_record.add(player_character_data.event.event_id)
 
 
 @settle_behavior.add_settle_behavior_effect(constant_effect.BehaviorEffect.GROUP_SEX_MODE_ON)
@@ -7590,14 +7612,21 @@ def handle_put_into_prison_add_just(
     # 对方数据结算
     target_data.sp_flag.be_bagged = 0
     target_data.sp_flag.imprisonment = 1
-    # 屈服2，恐怖1，反发3
+    target_fall = attr_calculation.get_character_fall_level(target_id, minus_flag=True)
+    # 给予屈服2，恐怖1，反发3，但如果有隶属系陷落，则可以减轻该效果
     if target_data.ability[14] <= 1:
         target_data.ability[14] = 2
         target_data.second_behavior[1034] = 1
-    if target_data.ability[17] <= 0:
+    if target_data.ability[17] <= 0 and target_fall >= -2:
         target_data.ability[17] = 1
         target_data.second_behavior[1042] = 1
-    if target_data.ability[18] <= 2:
+    if target_data.ability[18] <= 0 and target_fall >= -2:
+        target_data.ability[18] = 1
+        target_data.second_behavior[1045] = 1
+    if target_data.ability[18] <= 1 and target_fall >= -1:
+        target_data.ability[18] = 2
+        target_data.second_behavior[1046] = 1
+    if target_data.ability[18] <= 2 and target_fall >= 0:
         target_data.ability[18] = 3
         target_data.second_behavior[1047] = 1
     # 对方位置结算
@@ -9045,8 +9074,10 @@ def handle_do_h_failed_adjust(
     if character_data.target_character_id:
         target_data: game_type.Character = cache.character_data[character_data.target_character_id]
 
-        # 不需要再进行该判断
-        # if not character.calculation_instuct_judege(0,character_data.target_character_id,"严重骚扰"):
+        # 高陷落不进行该判断
+        chara_fall = attr_calculation.get_character_fall_level(character_data.target_character_id)
+        if chara_fall >= 4:
+            return
 
         change_data.target_change.setdefault(target_data.cid, game_type.TargetChange())
         target_change = change_data.target_change[target_data.cid]

@@ -471,6 +471,10 @@ class BODY_H_STATE:
         """ 本次H里各部位的高潮次数计数，身体部位编号int:[当次计数int，总次计数int] """
         self.plural_orgasm_count: int = 0
         """ 多重高潮次数 """
+        self.plural_orgasm_set: Set = set()
+        """ 多重高潮部位数据集合 """
+        self.endure_not_shot_count: int = 0
+        """ 忍住不射次数 """
         self.condom_info_show_flag: bool = False
         """ 避孕套信息输出标记 """
         self.condom_count: List = [0, 0]
@@ -490,7 +494,7 @@ class BODY_H_STATE:
         self.all_group_sex_temple_run: bool = False
         """ 运行全群交模板 """
         self.npc_ai_type_in_group_sex: int = 0
-        """ 未在模板中的NPC在群交中的AI逻辑，0为无行动，1为仅自慰，2为优先自动补位、无位则自慰 """
+        """ 未在模板中的NPC在群交中的AI逻辑，0为无行动，1为仅自慰，2为优先自动补位、无位则自慰，3为每次指令都重置位置后随机抢位 """
 
 
 class FIRST_RECORD:
@@ -980,6 +984,8 @@ class Rhodes_Island:
         """ 冷库里每个干员的当日圣水量，干员id:圣水ml存量 """
         self.total_semen_count: int = 0
         """ 每日总射精量 """
+        self.today_physical_examination_chara_id_dict: Dict[int, Tuple[set]] = {}
+        """ 今日已体检的干员数据 干员id:体检项目id集合 """
 
         # 文职区
         self.recruit_line: Dict[int, Tuple[float, int ,set, float]] = {}
@@ -1104,6 +1110,8 @@ class Ai_Setting:
         """ 当前使用的自定义base url """
         self.now_ai_chat_proxy: list = ["", ""]
         """ 当前使用的代理，[0代理ip,1代理端口] """
+        self.ai_chat_translator_setting: int = 0
+        """ 是否开启ai聊天翻译功能，0不开启，1仅翻译地文，2翻译地文和口上 """
 
 
 class Character:
@@ -1294,6 +1302,8 @@ class Cache:
         """ 玩家过去状态指令记录，最大长度为10 """
         self.taiggered_event_record: Set = set()
         """ 触发过的事件记录 """
+        self.today_taiggered_event_record: Set = set()
+        """ 今日触发过的事件记录 """
         self.now_init_map_id: str = ""
         """ 寻路算法用,当前节点所属的地图的id """
         self.collect_position_list: List = []

@@ -442,6 +442,12 @@ def update_character_config_data(value):
             if key not in value.body_manage:
                 value.body_manage[key] = 0
                 update_count += 1
+    # 助理服务
+    if len(value.assistant_services) != len(game_config.config_assistant_services):
+        for key in game_config.config_assistant_services:
+            if key not in value.assistant_services:
+                value.assistant_services[key] = 0
+                update_count += 1
     return update_count
 
 
@@ -553,7 +559,7 @@ def update_map(loaded_dict):
             loaded_dict["scene_data"][key].scene_tag = value.scene_tag
             update_count += 1
             change_map_flag = True
-        if not hasattr(loaded_dict["scene_data"][key], 'room_area'):
+        if not hasattr(loaded_dict["scene_data"][key], 'room_area') or value.room_area != loaded_dict["scene_data"][key].room_area:
             loaded_dict["scene_data"][key].room_area = value.room_area
             update_count += 1
             change_map_flag = True

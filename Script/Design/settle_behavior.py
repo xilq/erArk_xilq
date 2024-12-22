@@ -775,12 +775,19 @@ def orgasm_judge(character_id: int, change_data: game_type.CharacterStatusChange
             if handle_premise.handle_pl_semen_le_2(0):
                 character_data.second_behavior[1009] = 1
             else:
-                if character_data.h_state.orgasm_level[3] % 3 == 0:
+                # 忍住射精
+                endure_flag = ejaculation_panel.show_endure_ejaculation_panel()
+                if endure_flag:
+                    return
+                # 普
+                if character_data.h_state.endure_not_shot_count == 0:
                     character_data.second_behavior[1009] = 1
-                elif character_data.h_state.orgasm_level[3] % 3 == 1:
-                    character_data.second_behavior[1010] = 1
-                elif character_data.h_state.orgasm_level[3] % 3 == 2:
+                # 超强
+                elif character_data.h_state.endure_not_shot_count >= 4:
                     character_data.second_behavior[1011] = 1
+                # 强
+                else:
+                    character_data.second_behavior[1010] = 1
             character_data.eja_point = 0
             now_draw = ejaculation_panel.Ejaculation_Panel(width)
             now_draw.draw()
@@ -859,6 +866,7 @@ def orgasm_settle(
     # print(f"进入{character_data.name}的高潮结算")
 
     part_count = 0  # 部位高潮计数
+    tem_orgasm_set = set()  # 临时高潮部位集合
     for orgasm in range(8):
         # 跳过射精槽
         if orgasm == 3:
@@ -910,6 +918,8 @@ def orgasm_settle(
                 continue
             # 该部位高潮计数+1
             part_count += 1
+            # 加入高潮部位记录
+            tem_orgasm_set.add(orgasm)
             # 判定触发哪些绝顶
             num = orgasm * 3 + 1000  # 通过num值来判断是二段行为记录的哪个位置
             # 开始根据概率计算
@@ -945,7 +955,7 @@ def orgasm_settle(
     if part_count >= 2:
         second_behavior_index = 1079 + part_count
         character_data.second_behavior[second_behavior_index] = 1
-        character_data.h_state.plural_orgasm_count = part_count
+        character_data.h_state.plural_orgasm_set = tem_orgasm_set.copy()
 
 
 def judge_orgasm_degree(level_count: int) -> int:
